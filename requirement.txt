@@ -1,0 +1,10 @@
+numpy
+pandas
+wandb
+gpustat
+loguru
+matplotlib
+omegaconf
+scikit-learn
+tensorboardX
+transformers

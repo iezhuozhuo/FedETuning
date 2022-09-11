@@ -1,0 +1,12 @@
+# FedBGA
+
+server 下发 model + layer_idx
+client 只更新 layer_idx
+
+all layer 随机选取 3/6
+
+low/mid/high 随机选取 3/6
+
+
+
+
