@@ -1,4 +1,4 @@
-""" general functions for fedlab-nlp """
+""" general functions for FedETuning """
 
 import os
 import pickle

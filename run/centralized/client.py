@@ -1,4 +1,4 @@
-"""Centralized Training for FedLab-NLP"""
+"""Centralized Training for FedETuning"""
 
 from abc import ABC
 from trainers.BaseClient.base_client import BaseClientTrainer

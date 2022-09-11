@@ -1,4 +1,4 @@
-"""federated configs for FedLab-NLP"""
+"""federated configs for FedETuning"""
 
 from typing import Optional
 from dataclasses import dataclass, field

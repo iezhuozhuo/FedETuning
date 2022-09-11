@@ -1,4 +1,4 @@
-"""config for FedLab-NLP"""
+"""config for FedETuning"""
 
 import os
 import time

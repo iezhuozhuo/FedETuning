@@ -1,4 +1,4 @@
-""" BaseServer for FedLab-NLP """
+""" BaseServer for FedETuning """
 
 import os
 import random

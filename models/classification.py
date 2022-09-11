@@ -1,4 +1,4 @@
-"""SeqClassification Model For FedLab-NLP """
+"""SeqClassification Model For FedETuning """
 
 import copy
 from abc import ABC

@@ -1,4 +1,4 @@
-"""define evaluation scripts for FedLab-NLP """
+"""define evaluation scripts for FedETuning """
 
 import torch
 import numpy as np

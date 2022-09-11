@@ -1,4 +1,4 @@
-"""BaseTrainer for FedLab-NLP"""
+"""BaseTrainer for FedETuning"""
 
 from abc import ABC
 from utils import registry

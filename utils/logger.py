@@ -1,4 +1,4 @@
-""" pretty logging for fedlab-nlp """
+""" pretty logging for FedETuning """
 
 import sys
 from loguru import logger

@@ -1,4 +1,4 @@
-"""Base DataLoader for FedLab-NLP"""
+"""Base DataLoader for FedETuning"""
 
 import os
 from abc import ABC

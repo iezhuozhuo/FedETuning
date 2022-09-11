@@ -1,4 +1,4 @@
-"""Customer Dataloader for FedLab-NLP"""
+"""Customer Dataloader for FedETuning"""
 
 import os
 import numpy as np

@@ -1,4 +1,4 @@
-"""BaseClientTrainer for FedLab-NLP"""
+"""BaseClientTrainer for FedETuning"""
 
 from typing import List
 from abc import ABC

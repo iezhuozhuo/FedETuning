@@ -1,4 +1,4 @@
-""" loss for fedlab-nlp """
+""" loss for FedETuning """
 
 from typing import Dict, List
 import torch

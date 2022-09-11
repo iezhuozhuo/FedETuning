@@ -1,4 +1,4 @@
-"""main.py for FedLab-NLP"""
+"""main.py for FedETuning"""
 
 from utils import registry
 from utils import build_config
