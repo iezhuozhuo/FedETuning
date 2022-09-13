@@ -73,8 +73,6 @@ bash fed_run.sh {your_file_path}/workspace {task_name} fedavg 10001 {server_gpu_
 bash cen_run.sh {your_file_path}/workspace {task_name} centralized 10001 {server_gpu_id}
 ```
 
-## Contributing
-
 
 ## License
 [Apache License 2.0](https://git.openi.org.cn/Trustworthy-DL/fednlp-dev/src/branch/master/LICENSE)
