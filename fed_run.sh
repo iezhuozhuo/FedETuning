@@ -34,7 +34,7 @@ fi
 echo "${task_name}'s max_seq is ${max_seq}"
 
 CUDA_VISIBLE_DEVICES=${device[0]} python main.py \
---model_name_or_path ${run_dirs}/pretrain/nlp/bert-base-uncased/ \
+--model_name_or_path ${run_dirs}/pretrain/nlp/roberta-base/ \
 --output_dir ${run_dirs}/output/fedglue \
 --rank 0 \
 --task_name ${task_name} \
@@ -52,7 +52,7 @@ do
 {
     echo "client ${i} started"
     CUDA_VISIBLE_DEVICES=${device[i]} python main.py \
-    --model_name_or_path ${run_dirs}/pretrain/nlp/bert-base-uncased/ \
+    --model_name_or_path ${run_dirs}/pretrain/nlp/roberta-base/ \
     --output_dir ${run_dirs}/output/fedglue \
     --rank ${i} \
     --task_name ${task_name} \

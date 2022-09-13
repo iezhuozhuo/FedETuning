@@ -8,7 +8,7 @@ federated_config:
   sample: 0.1
 
 model_config:
-  model_type: bert
+  model_type: roberta
   model_output_mode: seq_classification
   permutation_layers: false
   client_model_layers: [0,1,2,3,4,5]
@@ -21,5 +21,5 @@ training_config:
   num_train_epochs: 1
   learning_rate: 5e-5
   metric_name: glue
-  seed: 17
+  seed: 42
 

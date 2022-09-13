@@ -137,9 +137,9 @@ class BaseClientTrainer(ClientTrainer, ABC):
         # Prepare optimizer and schedule (linear warmup and decay)
         no_decay = ['bias', 'LayerNorm.weight']
         optimizer_grouped_parameters = [
-            {'params': [p for n, p in model.backbone.bert.named_parameters() if
+            {'params': [p for n, p in model.bert.named_parameters() if
                         not any(nd in n for nd in no_decay)], 'weight_decay': self.training_config.weight_decay},
-            {'params': [p for n, p in model.backbone.bert.named_parameters() if
+            {'params': [p for n, p in model.bert.named_parameters() if
                         any(nd in n for nd in no_decay)], 'weight_decay': 0.0},
         ]
         return optimizer_grouped_parameters
@@ -204,7 +204,7 @@ class BaseClientTrainer(ClientTrainer, ABC):
                       'labels': batch[3]
                       }
             label = inputs['labels']
-            if self.model_config.model_type != 'distilbert':
+            if self.model_config.model_type != 'distilbert' or self.model_config.model_type != 'roberta':
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
                 inputs['token_type_ids'] = batch[2] \
                     if self.model_config.model_type in ['bert', 'xlnet'] else None

@@ -26,5 +26,9 @@ class BaseModels(nn.Module):
     def freezed_layers(self, model):
         raise NotImplementedError
 
+    @property
+    def bert(self):
+        return None
+
     def forward(self, inputs):
         raise NotImplementedError

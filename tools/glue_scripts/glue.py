@@ -62,7 +62,7 @@ def get_partition_data(examples, num_classes, num_clients, label_vocab, dir_alph
     return partition_data
 
 
-def convert_glue_to_federated_pkl(args):
+def convert_glue_to_device_pkl(args):
 
     logger.info("reading examples ...")
 
@@ -132,30 +132,85 @@ def convert_glue_to_federated_pkl(args):
     logger.info("end")
 
 
+def convert_glue_to_silo_pkl(args):
+    logger.info(f"reading {args.task} examples ...")
+    train_examples, original_valid_examples, original_test_examples, output_mode, label_list \
+        = load_glue_examples(args)
+    # we need to split original valid_examples into new valid and test sets
+    original_valid_examples_idx = [i for i in range(len(original_valid_examples))]
+    original_valid_examples_label = [example.label for example in original_valid_examples]
+    valid_idx, test_idx, valid_y, test_y = train_test_split(
+        original_valid_examples_idx, original_valid_examples_label,
+        test_size=0.5, random_state=42, stratify=original_valid_examples_label
+    )
+    valid_examples = [original_valid_examples[idx] for idx in valid_idx]
+    test_examples = [original_valid_examples[idx] for idx in test_idx]
+
+    data = {
+        "train": train_examples, "valid": valid_examples, "test": test_examples,
+        "output_mode": output_mode, "label_list": label_list
+    }
+
+    lable_mapping = {label: idx for idx, label in enumerate(label_list)}
+    attribute = {"lable_mapping": lable_mapping, "label_list": label_list,
+                 "clients_num": args.clients_num, "alpha": args.alpha,
+                 "output_mode": output_mode
+                 }
+    clients_partition_data = {"train": [i for i in range(len(train_examples))],
+                              "valid": [i for i in range(len(valid_examples))],
+                              "test": [i for i in range(len(test_examples))],
+                              "attribute": attribute
+                              }
+
+    return data, clients_partition_data
+
+
 if __name__ == "__main__":
     logger.info("start...")
     args = parser_args()
     data_dir = args.data_dir
     output_dir = args.output_dir
-
     tasks = ["MRPC", "SST-2", "QNLI", "QQP", "MNLI", "CoLA", "RTE"]
     # tasks = ["MRPC"]
-    client_nums = [100, 10]
-    args.overwrite = True
+
+    # Cross-Device Setting
+    # client_nums = [100, 10]
+    # args.overwrite = True
+    # for task in tasks:
+    #     for client_num in client_nums:
+    #         args.clients_num = client_num
+    #         args.task = task
+    #         args.data_dir = os.path.join(data_dir, args.task)
+    #         args.output_dir = os.path.join(output_dir, "fedglue")
+    #         make_sure_dirs(args.output_dir)
+    #         args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
+    #         args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
+    #
+    #         logger.info(f"clients_num: {args.clients_num}")
+    #         logger.info(f"data_dir: {args.data_dir}")
+    #         logger.info(f"output_dir: {args.output_dir}")
+    #         logger.info(f"output_data_file: {args.output_data_file}")
+    #         logger.info(f"output_partition_file: {args.output_partition_file}")
+    #
+    #         convert_glue_to_device_pkl(args)
+
+    # Cross-Silo
+    args.output_dir = os.path.join(output_dir, "silos")
+    make_sure_dirs(args.output_dir)
+    args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
+    args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
+    data, partition_data = {}, {}
     for task in tasks:
-        for client_num in client_nums:
-            args.clients_num = client_num
-            args.task = task
-            args.data_dir = os.path.join(data_dir, args.task)
-            args.output_dir = os.path.join(output_dir, "fedglue")
-            make_sure_dirs(args.output_dir)
-            args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
-            args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
+        args.task = task
+        args.data_dir = os.path.join(data_dir, args.task)
+        clients_data, clients_partition_data = convert_glue_to_silo_pkl(args)
+        data[task.lower()] = clients_data
+        partition_data[task.lower()] = clients_partition_data
 
-            logger.info(f"clients_num: {args.clients_num}")
-            logger.info(f"data_dir: {args.data_dir}")
-            logger.info(f"output_dir: {args.output_dir}")
-            logger.info(f"output_data_file: {args.output_data_file}")
-            logger.info(f"output_partition_file: {args.output_partition_file}")
+    with open(args.output_data_file, "wb") as file:
+        pickle.dump(data, file)
 
-            convert_glue_to_federated_pkl(args)
+    with open(args.output_partition_file, "wb") as file:
+        pickle.dump(partition_data, file)
+
+    logger.info("end")

@@ -102,7 +102,13 @@ class GlueDataLoader(BaseDataLoader):
         # Convert to Tensors and build dataset
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
         all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-        all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
+
+        if self.model_config.model_type not in ["distilbert", "roberta"]:
+            all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
+        else:
+            # distilbert and roberta don't have token_type_ids
+            all_token_type_ids = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
+
         if self.output_mode == "classification":
             all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
         elif self.output_mode == "regression":
@@ -129,6 +135,7 @@ class GlueDataLoader(BaseDataLoader):
             raise ValueError(f"partition data have {n_clients} clients "
                              f"that mismatches your input {self.federated_config.clients_num} clients")
 
+        # TODO multi-task examples
         self.logger.info("convert train examples into features ...")
         train_features_all = np.array(glue_convert_examples_to_features(
             examples=raw_data["train"], tokenizer=self.tokenizer,

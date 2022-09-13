@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 """
-All the code comes from https://github.com/FedML-AI/FedNLP/blob/master/data/advanced_partition/niid_label.py
+This code snippets come from https://github.com/FedML-AI/FedNLP/blob/master/data/advanced_partition/niid_label.py
 """
 def dynamic_batch_fill(label_index_tracker, label_index_matrix,
                        remaining_length, current_label_id):
