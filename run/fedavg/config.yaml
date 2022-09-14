@@ -13,8 +13,6 @@ model_config:
   permutation_layers: false
   client_model_layers: [0,1,2,3,4,5]
   server_model_layers: [0,1,2,3,4,5]
-#  client_model_layers: [0,1,2]
-#  server_model_layers: [0,1,2]
 
 training_config:
   per_device_train_batch_size: 32
