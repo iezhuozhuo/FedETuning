@@ -2,10 +2,10 @@ data_config:
   dataset_name: glue
 
 federated_config:
-  clients_num: 100
+  clients_num: 10
   rounds: 100
   alpha: 1.0
-  sample: 0.1
+  sample: 1.0
 
 model_config:
   model_type: roberta
