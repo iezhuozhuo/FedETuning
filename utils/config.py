@@ -11,6 +11,11 @@ from utils.register import registry
 from configs import ModelArguments, DataTrainingArguments, TrainArguments, FederatedTrainingArguments
 
 
+tuning_key_check_dict = {
+    "adapter": ["unfrozen_modules", "bottleneck_dim",]
+}
+
+
 class Config(ABC):
     def __init__(self, model_args, data_args, training_args, federated_args):
         self.model_config = model_args
@@ -23,6 +28,7 @@ class Config(ABC):
 
     def check_config(self):
         self.config_check_federated()
+        self.config_check_model()
 
     def config_check_federated(self):
 
@@ -34,6 +40,13 @@ class Config(ABC):
         else:
             if self.F.clients_num % (self.F.world_size - 1):
                 raise ValueError(f"{self.F.clients_num} % {(self.F.world_size - 1)} != 0")
+
+    def config_check_model(self):
+        if self.M.tuing_type:
+            if "adapter" in self.M.tuing_type:
+                for key in tuning_key_check_dict["adapter"]:
+                    if not self.M.getattr(key, None):
+                        raise ValueError(f"Adapter missing key {key}")
 
     @property
     def M(self):

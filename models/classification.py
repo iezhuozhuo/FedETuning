@@ -66,15 +66,3 @@ class SeqClassification(BaseModels, ABC):
     def forward(self, inputs):
         output = self.backbone(**inputs)
         return output
-
-    @property
-    def bert(self):
-
-        if self.model_config.model_type == "bert":
-            return self.backbone.bert
-        elif self.model_config.model_type == "roberta":
-            return self.backbone.roberta
-        elif self.model_config.model_type == "distilbert":
-            return self.backbone.distilbert
-        else:
-            raise NotImplementedError

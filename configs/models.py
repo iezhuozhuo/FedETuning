@@ -60,5 +60,11 @@ class ModelArguments:
         metadata={"help": "The client model's size, default=[i for i in range(12)]"},
     )
 
+    # Efficient Model Config
+    tuning_type: str = field(
+        default=None,
+        metadata={"help": "The Efficient Fine-tuning type, support {adapter, prompt, lora, prefix}"}
+    )
+
     def __post_init__(self):
         ...

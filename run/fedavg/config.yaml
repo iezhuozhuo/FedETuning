@@ -1,6 +1,7 @@
 data_config:
   dataset_name: glue
 
+
 federated_config:
   clients_num: 10
   rounds: 10
@@ -14,6 +15,9 @@ model_config:
   permutation_layers: false
   client_model_layers: [0,1,2,3,4,5]
   server_model_layers: [0,1,2,3,4,5]
+  tuning_type:
+  unfrozen_modules: [layer_norm, final_layer_norm, classifier]
+  bottleneck_dim: 24
 
 training_config:
   per_device_train_batch_size: 32
