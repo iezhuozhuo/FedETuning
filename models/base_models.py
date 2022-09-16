@@ -26,13 +26,14 @@ class BaseModels(nn.Module):
     def freezed_layers(self, model):
         raise NotImplementedError
 
-    def _build_efftuning_model(self):
+    def _build_adapter_model(self):
         # . addressing a module inside the backbone model using a minimal description key.
         # . provide the interface for modifying and inserting model which keeps the docs/IO the same as the module
         #   before modification.
         # . pass a pseudo input to determine the inter dimension of the delta models.
         # . freeze a part of model parameters according to key.
         ...
+
 
     def forward(self, inputs):
         raise NotImplementedError
