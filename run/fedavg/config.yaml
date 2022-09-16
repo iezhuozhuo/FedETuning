@@ -3,7 +3,7 @@ data_config:
 
 federated_config:
   clients_num: 10
-  rounds: 100
+  rounds: 10
   alpha: 1.0
   sample: 1.0
 

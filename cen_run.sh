@@ -33,7 +33,7 @@ fi
 echo "${task_name}'s max_seq is ${max_seq}"
 
 CUDA_VISIBLE_DEVICES=${device[0]} python main.py \
---model_name_or_path ${run_dirs}/pretrain/nlp/bert-base-uncased/ \
+--model_name_or_path ${run_dirs}/pretrain/nlp/roberta-base/ \
 --output_dir ${run_dirs}/output/fedglue \
 --task_name ${task_name} \
 --fl_algorithm ${fl_algorithm} \

@@ -25,7 +25,8 @@ class Config(ABC):
         self.config_check_federated()
 
     def config_check_federated(self):
-        if self.F.world_size is None:
+
+        if "cen" in self.F.fl_algorithm:
             if self.F.rank == -1:
                 self.F.world_size = 1
             else:
@@ -124,5 +125,7 @@ def build_config():
     logger.info(f"cache_dir: {config.data_config.cache_dir}")
     logger.info(f"save_dir: {config.training_config.save_dir}")
     logger.info(f"checkpoint_dir: {config.training_config.checkpoint_dir}")
+    logger.info(f"base_info: {config.M.model_type}_num={config.F.clients_num}_"
+                f"alp={config.F.alpha}_rd={config.F.rounds}_smp={config.F.sample}")
 
     return config
