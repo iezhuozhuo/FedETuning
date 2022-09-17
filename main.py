@@ -13,7 +13,7 @@ def main():
     config = build_config()
 
     trainer = registry.get_fl_class(config.federated_config.fl_algorithm)()
-    # trainer.train()
+    trainer.train()
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ from transformers import HfArgumentParser
 from utils import make_sure_dirs, rm_file
 from utils.register import registry
 from configs import ModelArguments, DataTrainingArguments, TrainArguments, FederatedTrainingArguments
+from configs.tuning import get_delta_config
 
 
 tuning_key_check_dict = {
@@ -42,11 +43,13 @@ class Config(ABC):
                 raise ValueError(f"{self.F.clients_num} % {(self.F.world_size - 1)} != 0")
 
     def config_check_model(self):
-        if self.M.tuing_type:
-            if "adapter" in self.M.tuing_type:
-                for key in tuning_key_check_dict["adapter"]:
-                    if not self.M.getattr(key, None):
-                        raise ValueError(f"Adapter missing key {key}")
+        if self.M.tuning_type:
+            # if "adapter" in self.M.tuing_type:
+            #     for key in tuning_key_check_dict["adapter"]:
+            #         if not self.M.getattr(key, None):
+            #             raise ValueError(f"Adapter missing key {key}")
+            delta_config = get_delta_config(self.M.tuning_type)
+            registry.register("delta_config", delta_config)
 
     @property
     def M(self):
@@ -141,4 +144,6 @@ def build_config():
     logger.info(f"base_info: {config.M.model_type}_num={config.F.clients_num}_"
                 f"alp={config.F.alpha}_rd={config.F.rounds}_smp={config.F.sample}")
 
+    delta_args = registry.get("delta_config")
+    logger.debug(f"delta_args: {delta_args}")
     return config

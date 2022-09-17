@@ -14,8 +14,7 @@ class SeqClassification(BaseModels, ABC):
         super().__init__(task_name)
 
         self.num_labels = registry.get("num_labels")
-        self.auto_config = self._build_config()
-        self.backbone = self._build_model()
+        self._before_training()
 
     def _build_config(self):
         auto_config = AutoConfig.from_pretrained(
@@ -42,6 +41,9 @@ class SeqClassification(BaseModels, ABC):
         if getattr(self.model_config, "permutation_layers", None):
             backbone = self.permutate_layers(backbone)
 
+        if self.model_config.tuning_type:
+            backbone = self._build_delta_model(backbone)
+
         return backbone
 
     def permutate_layers(self, model):
@@ -66,3 +68,15 @@ class SeqClassification(BaseModels, ABC):
     def forward(self, inputs):
         output = self.backbone(**inputs)
         return output
+
+    @property
+    def bert(self):
+
+        if self.model_config.model_type == "bert":
+            return self.backbone.bert
+        elif self.model_config.model_type == "roberta":
+            return self.backbone.roberta
+        elif self.model_config.model_type == "distilbert":
+            return self.backbone.distilbert
+        else:
+            raise NotImplementedError
