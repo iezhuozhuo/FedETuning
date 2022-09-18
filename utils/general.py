@@ -143,7 +143,7 @@ def cen_metric_save(loc_trainer, training_config, logger):
 def get_parameter_number(net):
     total_num = sum(p.numel() for p in net.parameters())
     trainable_num = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    return {'Total': f"{total_num/1e6:.3f}", 'Trainable': f"{trainable_num/1e6:.3f}"}
+    return {'Total': f"{total_num/1e6:.3f}M", 'Trainable': f"{trainable_num/1e6:.3f}M"}
 
 
 def setup_imports():

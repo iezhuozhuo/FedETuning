@@ -1,5 +1,8 @@
+"""BaseModel for FedETuning"""
+
 from abc import ABC, abstractmethod
 from utils import registry
+from utils import get_parameter_number
 import torch.nn as nn
 
 
@@ -17,6 +20,8 @@ class BaseModels(nn.Module):
     def _before_training(self):
         self.auto_config = self._build_config()
         self.backbone = self._build_model()
+        self.logger.debug(f"Model Type: {self.model_config.model_type}, "
+                          f"Parameters: {get_parameter_number(self.backbone)}")
 
     def _build_config(self):
         raise NotImplementedError
@@ -30,7 +35,7 @@ class BaseModels(nn.Module):
     def freezed_layers(self, model):
         raise NotImplementedError
 
-    def _build_delta_model(self, backbone):
+    def _add_delta_model(self, backbone):
         # . addressing a module inside the backbone model using a minimal description key.
         # . provide the interface for modifying and inserting model which keeps the docs/IO the same as the module
         #   before modification.
@@ -44,8 +49,9 @@ class BaseModels(nn.Module):
         delta_config = AutoDeltaConfig.from_dict(delta_args)
         delta_model = AutoDeltaModel.from_config(delta_config, backbone_model=backbone)
         delta_model.freeze_module(set_state_dict=True)
-        delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=True)
-        return delta_model
+        # delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=False)
+        # self.logger.debug(backbone)
+        return backbone
 
     def forward(self, inputs):
         raise NotImplementedError

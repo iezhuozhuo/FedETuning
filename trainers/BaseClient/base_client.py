@@ -142,6 +142,13 @@ class BaseClientTrainer(ClientTrainer, ABC):
             {'params': [p for n, p in model.bert.named_parameters() if
                         any(nd in n for nd in no_decay)], 'weight_decay': 0.0},
         ]
+
+        # Both pieces of code have the same effect
+        # optimizer_grouped_parameters = [
+        #     {"params": filter(lambda x: x.requires_grad, model.bert.parameters()),
+        #      'weight_decay': 0.0},
+        # ]
+
         return optimizer_grouped_parameters
 
     def _mixed_train_model(self, model, optimizer):

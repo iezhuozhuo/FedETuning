@@ -42,7 +42,7 @@ class SeqClassification(BaseModels, ABC):
             backbone = self.permutate_layers(backbone)
 
         if self.model_config.tuning_type:
-            backbone = self._build_delta_model(backbone)
+            backbone = self._add_delta_model(backbone)
 
         return backbone
 
