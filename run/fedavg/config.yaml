@@ -3,10 +3,10 @@ data_config:
 
 
 federated_config:
-  clients_num: 10
-  rounds: 10
+  clients_num: 100
+  rounds: 100
   alpha: 1.0
-  sample: 1.0
+  sample: 0.1
 
 
 model_config:
@@ -15,12 +15,13 @@ model_config:
   permutation_layers: false
   client_model_layers: [0,1,2,3,4,5]
   server_model_layers: [0,1,2,3,4,5]
-  tuning_type:
+  tuning_type: adapter_roberta-base
 
 training_config:
   per_device_train_batch_size: 32
   num_train_epochs: 1
-  learning_rate: 5e-5
+#  learning_rate: 5e-5
+  learning_rate: 3e-4
   metric_name: glue
   seed: 42
 
