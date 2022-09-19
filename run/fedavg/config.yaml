@@ -3,10 +3,14 @@ data_config:
 
 
 federated_config:
-  clients_num: 100
-  rounds: 100
   alpha: 1.0
-  sample: 0.1
+#  clients_num: 100
+#  rounds: 100
+#  sample: 0.1
+
+  clients_num: 10
+  rounds: 10
+  sample: 1.0
 
 
 model_config:
