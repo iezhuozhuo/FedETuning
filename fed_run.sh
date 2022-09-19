@@ -33,7 +33,7 @@ else
 fi
 echo "${task_name}'s max_seq is ${max_seq}"
 
-sleep 7h
+#sleep 7h
 
 CUDA_VISIBLE_DEVICES=${device[0]} python main.py \
 --model_name_or_path ${run_dirs}/pretrain/nlp/roberta-base/ \
