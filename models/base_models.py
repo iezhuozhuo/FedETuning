@@ -49,8 +49,10 @@ class BaseModels(nn.Module):
         delta_config = AutoDeltaConfig.from_dict(delta_args)
         delta_model = AutoDeltaModel.from_config(delta_config, backbone_model=backbone)
         delta_model.freeze_module(set_state_dict=True)
-        # delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=False)
+        delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=True)
+        # self.logger.debug(delta_config)
         # self.logger.debug(backbone)
+        # self.logger.debug(delta_args)
         return backbone
 
     def forward(self, inputs):

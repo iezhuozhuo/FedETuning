@@ -316,19 +316,32 @@ AllConfigs['soft_prompt_deberta-v2-xlarge'].update({
 
 
 def get_delta_config(delta_name):
-    all_delta_config = {"adapter_roberta-base":
-                         {"delta_type": "adapter",
-                          "learning_rate": 3e-4,
-                          "unfrozen_modules": [
-                              "deltas",
-                              "layer_norm",
-                              "final_layer_norm",
-                              "classifier",
-                          ],
-                          "bottleneck_dim": 24,
-                          "output_dir": "outputs/adapter/roberta-base/",
-                          }
-                     }
+    all_delta_config = {
+        "adapter_roberta-base":
+            {
+                "delta_type": "adapter",
+                "learning_rate": 3e-4,
+                "unfrozen_modules": [
+                    "deltas",
+                    "layer_norm",
+                    "final_layer_norm",
+                    "classifier",
+                ],
+                "bottleneck_dim": 24,
+                "output_dir": "/workspace/outputs/adapter/roberta-base/",
+            },
+        'soft_prompt_roberta-base':
+            {
+                "delta_type": "soft_prompt",
+                "learning_rate": 3e-2,
+                "soft_token_num": 100,
+                "unfrozen_modules": [
+                    "deltas",
+                    "classifier",
+                ],
+                "output_dir": "/workspace/outputs/soft_prompt/roberta-base/",
+            }
+    }
     return all_delta_config[delta_name]
 
 
