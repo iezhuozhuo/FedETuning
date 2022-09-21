@@ -64,8 +64,10 @@ class BaseSyncServerHandler(ParameterServerBackendHandler, ABC):
         # metric line
         self.metric_name = self.metric.metric_name
         times = registry.get("run_time")
-        self.metric_line = f"{times}_{self.model_config.model_type}_client={self.federated_config.clients_num}_" \
-                           f"alpha={self.federated_config.alpha}_ci={self.federated_config.sample}_"
+        self.metric_line = f"{times}_{self.model_config.model_type}_{self.training_config.tuning_type}_" \
+                           f"cli={self.federated_config.clients_num}_alp={self.federated_config.alpha}_" \
+                           f"sap={self.federated_config.sample}_lr={self.training_config.learning_rate}_" \
+                           f"epo={self.training_config.num_train_epochs}_"
 
         # global model
         self.glo_save_file = os.path.join(

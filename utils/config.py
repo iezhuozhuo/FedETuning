@@ -72,6 +72,7 @@ class Config(ABC):
         ...
 
     def config_check_tuning(self):
+
         if not self.M.tuning_type:
             return
 
@@ -86,9 +87,11 @@ class Config(ABC):
             for key, value in delta_config.items():
                 if getattr(config, key, None) is not None:
                     setattr(config, key, value)
-                    registry.debug(f"{key}={value}")
-
+                    # registry.debug(f"{key}={value}")
         self.T.tuning_type = delta_config["delta_type"]
+        # TODO hard code
+        if "fed" in self.F.fl_algorithm and "lora" in self.T.tuning_type:
+            self.T.num_train_epochs = 1
 
     @property
     def M(self):
@@ -172,6 +175,7 @@ def build_config():
 
     # amend and register configs
     config = amend_config(model_args, data_args, training_args, federated_args)
+    delta_config = registry.get("delta_config")
 
     # logging fl & some path
     logger = registry.get("logger")
@@ -180,12 +184,9 @@ def build_config():
     logger.info(f"cache_dir: {config.data_config.cache_dir}")
     logger.info(f"save_dir: {config.training_config.save_dir}")
     logger.info(f"checkpoint_dir: {config.training_config.checkpoint_dir}")
-    logger.debug(f"base_info: {config.M.model_type}_num={config.F.clients_num}_"
-                 f"alp={config.F.alpha}_rd={config.F.rounds}_smp={config.F.sample}_"
-                 f"lr={config.T.learning_rate}_epoch={config.T.num_train_epochs}")
-
-    delta_config = registry.get("delta_config")
-    logger.debug(f"tuning type: {delta_config['delta_type']}")
+    logger.debug(f"TrainBaseInfo: {config.M.model_type}_{delta_config['delta_type']}_"
+                 f"cli={config.F.clients_num}_alp={config.F.alpha}_cr={config.F.rounds}_sap={config.F.sample}_"
+                 f"lr={config.T.learning_rate}_epo={config.T.num_train_epochs}")
 
     # exit()
 
