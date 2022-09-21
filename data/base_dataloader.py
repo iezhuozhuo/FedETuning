@@ -57,19 +57,22 @@ class BaseDataLoader(ABC):
 
     @property
     def cached_data_file(self):
-        if self.federated_config.rank != -1:
-            cached_file = os.path.join(
-                self.data_config.cache_dir,
-                f"models={self.model_config.model_type}_"
-                f"seq={self.data_config.max_seq_length}_"
-                f"clients={self.federated_config.clients_num}_"
-                f"alpha={self.federated_config.alpha}"
-            )
+        if "prompt" in self.training_config.tuning_type:
+            prompt_flag = "prompt_"
         else:
-            cached_file = os.path.join(
-                self.data_config.cache_dir,
-                f"models={self.model_config.model_type}_"
-                f"seq={self.data_config.max_seq_length}_"
-                f"centralized"
-            )
+            prompt_flag = ""
+
+        if self.federated_config.rank != -1:
+            cached_file_name = f"models={self.model_config.model_type}_{prompt_flag}" \
+                               f"seq={self.data_config.max_seq_length}_" \
+                               f"clients={self.federated_config.clients_num}_" \
+                               f"alpha={self.federated_config.alpha}"
+        else:
+            cached_file_name = f"models={self.model_config.model_type}_{prompt_flag}" \
+                               f"seq={self.data_config.max_seq_length}_" \
+                               f"centralized"
+
+        cached_file = os.path.join(
+            self.data_config.cache_dir, cached_file_name
+        )
         return cached_file
