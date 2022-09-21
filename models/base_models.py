@@ -4,6 +4,10 @@ from abc import ABC, abstractmethod
 from utils import registry
 from utils import get_parameter_number
 import torch.nn as nn
+from transformers import trainer
+
+from opendelta import AutoDeltaConfig
+from opendelta.auto_delta import AutoDeltaModel
 
 
 class BaseModels(nn.Module):
@@ -42,30 +46,31 @@ class BaseModels(nn.Module):
         # . pass a pseudo input to determine the inter dimension of the delta models.
         # . freeze a part of model parameters according to key.
 
-        from opendelta import AutoDeltaConfig
-        from opendelta.auto_delta import AutoDeltaModel
+        if "prompt" in self.model_config.tuning_type:
+            ...
+        else:
+            delta_args = registry.get("delta_config")
+            delta_config = AutoDeltaConfig.from_dict(delta_args)
+            delta_model = AutoDeltaModel.from_config(delta_config, backbone_model=backbone)
+            delta_model.freeze_module(set_state_dict=True)
+            delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=True)
+            # self.logger.debug(delta_config)
+            # self.logger.debug(backbone)
+            # self.logger.debug(delta_args)
 
-        delta_args = registry.get("delta_config")
-        delta_config = AutoDeltaConfig.from_dict(delta_args)
-        delta_model = AutoDeltaModel.from_config(delta_config, backbone_model=backbone)
-        delta_model.freeze_module(set_state_dict=True)
-        delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=True)
-        # self.logger.debug(delta_config)
-        # self.logger.debug(backbone)
-        # self.logger.debug(delta_args)
         return backbone
 
     def forward(self, inputs):
         raise NotImplementedError
 
-    @property
-    def bert(self):
-
-        if self.model_config.model_type == "bert":
-            return self.backbone.bert
-        elif self.model_config.model_type == "roberta":
-            return self.backbone.roberta
-        elif self.model_config.model_type == "distilbert":
-            return self.backbone.distilbert
-        else:
-            raise NotImplementedError
+    # @property
+    # def bert(self):
+    #
+    #     if self.model_config.model_type == "bert":
+    #         return self.backbone.bert
+    #     elif self.model_config.model_type == "roberta":
+    #         return self.backbone.roberta
+    #     elif self.model_config.model_type == "distilbert":
+    #         return self.backbone.distilbert
+    #     else:
+    #         raise NotImplementedError

@@ -189,7 +189,7 @@ class BaseSyncServerHandler(ParameterServerBackendHandler, ABC):
                          f"comm_round={self.federated_config.rounds}")
 
         self.logger.debug(f"{self.federated_config.fl_algorithm} Eval "
-                          f"Round:{self.round}, Current Loss:{test_loss:.3f}, "
+                          f"Round:{self.round}, Loss:{test_loss:.3f}, "
                           f"Current {self.metric_name}:{test_metric:.3f}, "
                           f"Best {self.metric_name}:{self.global_valid_best_metric:.3f}")
 
