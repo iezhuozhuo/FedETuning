@@ -146,5 +146,10 @@ class Registry:
         keys = list(cls.mapping["state"].keys())
         return keys
 
+    @classmethod
+    def debug(cls, info):
+        from loguru import logger
+        logger.debug(info)
+
 
 registry = Registry()

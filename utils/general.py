@@ -134,7 +134,7 @@ def cen_metric_save(loc_trainer, training_config, logger):
     test_metric = loc_trainer.loc_test_metric[-1]
     valid_metric = loc_trainer.loc_best_metric[-1]
     times = training_config.times
-    line = f"{times}_valid_{loc_trainer.metric_name}={valid_metric:.3f}_"
+    line = f"{times}_type={training_config.tuning_type}_valid_{loc_trainer.metric_name}={valid_metric:.3f}_"
     line += f"test_{loc_trainer.metric_name}={test_metric:.3f}"
     file_write(line, training_config.metric_file, "a+")
     logger.info(f"training metric --> {training_config.metric_file}")

@@ -2,6 +2,9 @@
 
 import os
 import time
+import copy
+# import json
+# import dataclasses
 from abc import ABC
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
@@ -13,8 +16,30 @@ from configs.tuning import get_delta_config
 
 
 tuning_key_check_dict = {
-    "adapter": ["unfrozen_modules", "bottleneck_dim",]
+    "adapter": ["unfrozen_modules", "bottleneck_dim", ]
 }
+
+
+# class RemainArgHfArgumentParser(HfArgumentParser):
+#     def parse_json_file(self, json_file: str, return_remaining_args=True):
+#         """
+#         Alternative helper method that does not use `argparse` at all, instead loading a json file and populating the
+#         dataclass types.
+#         """
+#         data = json.loads(Path(json_file).read_text())
+#         outputs = []
+#         for dtype in self.dataclass_types:
+#             keys = {f.name for f in dataclasses.fields(dtype) if f.init}
+#             inputs = {k: data.pop(k) for k in list(data.keys()) if k in keys}
+#             obj = dtype(**inputs)
+#             outputs.append(obj)
+#
+#         remain_args = argparse.ArgumentParser()
+#         remain_args.__dict__.update(data)
+#         if return_remaining_args:
+#             return (*outputs, remain_args)
+#         else:
+#             return (*outputs,)
 
 
 class Config(ABC):
@@ -30,6 +55,7 @@ class Config(ABC):
     def check_config(self):
         self.config_check_federated()
         self.config_check_model()
+        self.config_check_tuning()
 
     def config_check_federated(self):
 
@@ -43,13 +69,26 @@ class Config(ABC):
                 raise ValueError(f"{self.F.clients_num} % {(self.F.world_size - 1)} != 0")
 
     def config_check_model(self):
-        if self.M.tuning_type:
-            # if "adapter" in self.M.tuing_type:
-            #     for key in tuning_key_check_dict["adapter"]:
-            #         if not self.M.getattr(key, None):
-            #             raise ValueError(f"Adapter missing key {key}")
-            delta_config = get_delta_config(self.M.tuning_type)
-            registry.register("delta_config", delta_config)
+        ...
+
+    def config_check_tuning(self):
+        if not self.M.tuning_type:
+            return
+
+        delta_args = get_delta_config(self.M.tuning_type)
+        if self.D.task_name in delta_args:
+            delta_config = delta_args[self.D.task_name]
+        else:
+            delta_config = delta_args
+        registry.register("delta_config", delta_config)
+
+        for config in [self.T, self.M, self.F, self.D]:
+            for key, value in delta_config.items():
+                if getattr(config, key, None) is not None:
+                    setattr(config, key, value)
+                    registry.debug(f"{key}={value}")
+
+        self.T.tuning_type = delta_config["delta_type"]
 
     @property
     def M(self):
@@ -141,9 +180,13 @@ def build_config():
     logger.info(f"cache_dir: {config.data_config.cache_dir}")
     logger.info(f"save_dir: {config.training_config.save_dir}")
     logger.info(f"checkpoint_dir: {config.training_config.checkpoint_dir}")
-    logger.info(f"base_info: {config.M.model_type}_num={config.F.clients_num}_"
-                f"alp={config.F.alpha}_rd={config.F.rounds}_smp={config.F.sample}")
+    logger.debug(f"base_info: {config.M.model_type}_num={config.F.clients_num}_"
+                 f"alp={config.F.alpha}_rd={config.F.rounds}_smp={config.F.sample}_"
+                 f"lr={config.T.learning_rate}_epoch={config.T.num_train_epochs}")
 
-    delta_args = registry.get("delta_config")
-    logger.debug(f"delta_args: {delta_args}")
+    delta_config = registry.get("delta_config")
+    logger.debug(f"tuning type: {delta_config['delta_type']}")
+
+    # exit()
+
     return config

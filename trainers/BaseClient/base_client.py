@@ -256,8 +256,8 @@ class BaseClientTrainer(ClientTrainer, ABC):
         """on epoch end"""
 
         self.logger.info(f"{self.data_config.task_name.upper()} Train, "
-                         f"client:{idx}, loss:{self.tr_loss/self.global_step:.3f}, "
-                         f"accuracy:{self.correct/self.total:.3f}")
+                         f"Client:{idx}, Loss:{self.tr_loss/self.global_step:.3f}, "
+                         f"Accuracy:{self.correct/self.total:.3f}")
 
         if not self.federated_config.pson:
             # not need for local test
@@ -282,7 +282,7 @@ class BaseClientTrainer(ClientTrainer, ABC):
             self.loc_best_params[idx] = SerializationTool.serialize_model(self._model)
 
         self.logger.debug(f"{self.data_config.task_name.upper()} Eval, "
-                          f"Client:{idx}, Current loss:{test_loss:.3f}, "
+                          f"Client:{idx}, Loss:{test_loss:.3f}, "
                           f"Current {self.metric_name}:{test_metric:.3f}, "
                           f"Best {self.metric_name}:{self.loc_best_metric[idx]:.3f}")
 
