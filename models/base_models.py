@@ -8,6 +8,8 @@ from transformers import trainer
 from opendelta import AutoDeltaConfig
 from opendelta.auto_delta import AutoDeltaModel
 
+from models.utils import PromptType
+
 
 class BaseModels(nn.Module, ABC):
     def __init__(self, task_name):
@@ -43,7 +45,8 @@ class BaseModels(nn.Module, ABC):
         # . pass a pseudo input to determine the inter dimension of the delta models.
         # . freeze a part of model parameters according to key.
 
-        if "prompt" in self.model_config.tuning_type:
+        if any([True for PType in PromptType if PType in self.model_config.tuning_type]):
+            # prefix tuning maybe in OpenDelta
             ...
         else:
             delta_args = registry.get("delta_config")

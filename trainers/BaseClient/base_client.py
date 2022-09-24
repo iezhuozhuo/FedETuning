@@ -55,7 +55,8 @@ class BaseClientTrainer(ClientTrainer, ABC):
         self.metric_name = self.metric.metric_name
         self._model.to(self.device)
 
-        self._calculate_model_computation()
+        if self.federated_config.rank == -1:
+            self._calculate_model_computation()
 
     def _calculate_model_computation(self):
 
