@@ -1,11 +1,15 @@
 """BaseClientTrainer for FedETuning"""
 
-from typing import List
 from abc import ABC
+from typing import List
+from thop import profile
+from thop import clever_format
+
 import torch
 from transformers import get_linear_schedule_with_warmup, AdamW
 
 from utils import registry
+from utils import get_parameter_number
 from fedlab.utils import MessageCode, SerializationTool
 from fedlab.core.client.trainer import ClientTrainer
 from fedlab.core.client.manager import PassiveClientManager
@@ -50,6 +54,24 @@ class BaseClientTrainer(ClientTrainer, ABC):
 
         self.metric_name = self.metric.metric_name
         self._model.to(self.device)
+
+        self._calculate_model_computation()
+
+    def _calculate_model_computation(self):
+
+        dummy_idx = list(self.train_dataset.keys())[0]
+        train_loader = self._get_dataloader(dataset=self.train_dataset, client_id=dummy_idx)
+        for step, batch in enumerate(train_loader):
+            self._model.train()
+            batch = tuple(t.to(self.device) for t in batch)
+
+            macs, params = profile(self._model.backbone, inputs=(batch[0],))
+            flops, params = clever_format([macs, params], "%.3f")
+            self.logger.debug(f"Model Type: {self.model_config.model_type}, "
+                              f"Tuning Type: {self.training_config.tuning_type}, "
+                              f"Parameters: {get_parameter_number(self._model.backbone)}, "
+                              f"FLOPs: {flops}")
+            break
 
     @property
     def uplink_package(self):

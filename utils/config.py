@@ -74,13 +74,14 @@ class Config(ABC):
     def config_check_tuning(self):
 
         if not self.M.tuning_type:
-            return
-
-        delta_args = get_delta_config(self.M.tuning_type)
-        if self.D.task_name in delta_args:
-            delta_config = delta_args[self.D.task_name]
+            delta_config = {"delta_type": "fine-tuning"}
         else:
-            delta_config = delta_args
+            delta_args = get_delta_config(self.M.tuning_type)
+            if self.D.task_name in delta_args:
+                delta_config = delta_args[self.D.task_name]
+            else:
+                delta_config = delta_args
+
         registry.register("delta_config", delta_config)
 
         for config in [self.T, self.M, self.F, self.D]:

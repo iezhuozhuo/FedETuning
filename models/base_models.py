@@ -1,8 +1,7 @@
 """BaseModel for FedETuning"""
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from utils import registry
-from utils import get_parameter_number
 import torch.nn as nn
 from transformers import trainer
 
@@ -10,7 +9,7 @@ from opendelta import AutoDeltaConfig
 from opendelta.auto_delta import AutoDeltaModel
 
 
-class BaseModels(nn.Module):
+class BaseModels(nn.Module, ABC):
     def __init__(self, task_name):
         super().__init__()
 
@@ -24,8 +23,6 @@ class BaseModels(nn.Module):
     def _before_training(self):
         self.auto_config = self._build_config()
         self.backbone = self._build_model()
-        self.logger.debug(f"Model Type: {self.model_config.model_type}, "
-                          f"Parameters: {get_parameter_number(self.backbone)}")
 
     def _build_config(self):
         raise NotImplementedError
@@ -53,7 +50,7 @@ class BaseModels(nn.Module):
             delta_config = AutoDeltaConfig.from_dict(delta_args)
             delta_model = AutoDeltaModel.from_config(delta_config, backbone_model=backbone)
             delta_model.freeze_module(set_state_dict=True)
-            delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=True)
+            # delta_model.log(delta_ratio=True, trainable_ratio=True, visualization=True)
             # self.logger.debug(delta_config)
             # self.logger.debug(backbone)
             # self.logger.debug(delta_args)

@@ -114,7 +114,11 @@ class GlueDataLoader(BaseDataLoader):
         elif self.output_mode == "regression":
             all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
 
-        dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
+        if self.model_config.tuning_type and "prompt" in self.model_config.tuning_type:
+            all_loss_ids = torch.tensor([f.loss_ids for f in features], dtype=torch.float)
+            dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_loss_ids)
+        else:
+            dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
 
         sampler = RandomSampler(dataset) if mode == "train" else SequentialSampler(dataset)
         dataloader = DataLoader(dataset, sampler=sampler, batch_size=self.training_config.train_batch_size)

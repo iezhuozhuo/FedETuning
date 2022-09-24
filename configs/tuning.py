@@ -149,5 +149,15 @@ def get_delta_config(delta_name):
                     }
 
             },
+        "bitfit_robert-base":
+            {
+                "delta_type": "bitfit",
+                "learning_rate": 3e-4,
+                "output_dir": "outputs/bitfit/roberta-base/",
+                "unfrozen_modules": [
+                    "classifier",
+                    "deltas"
+                ],
+            }
     }
     return all_delta_config[delta_name]
