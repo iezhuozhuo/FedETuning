@@ -5,7 +5,7 @@ from abc import ABC
 import torch
 from utils import registry
 from models.base_models import BaseModels
-from transformers import AutoConfig, AutoModelForSequenceClassification
+from transformers import AutoModelForTokenClassification, AutoModelForSequenceClassification
 
 
 @registry.register_model("seq_classification")
@@ -14,18 +14,8 @@ class SeqClassification(BaseModels, ABC):
         super().__init__(task_name)
 
         self.num_labels = registry.get("num_labels")
-        self._before_training()
-
-    def _build_config(self):
-        auto_config = AutoConfig.from_pretrained(
-            self.model_config.config_name if self.model_config.config_name else self.model_config.model_name_or_path,
-            num_labels=self.num_labels,
-            finetuning_task=self.task_name if self.task_name else None,
-            # cache_dir=self.model_config.cache_dir,
-            revision=self.model_config.model_revision,
-            use_auth_token=True if self.model_config.use_auth_token else None,
-        )
-        return auto_config
+        self.auto_config = self._build_config(num_labels=self.num_labels)
+        self.backbone = self._build_model()
 
     def _add_base_model(self):
         backbone = AutoModelForSequenceClassification.from_pretrained(
@@ -39,25 +29,6 @@ class SeqClassification(BaseModels, ABC):
         )
         return backbone
 
-    def _add_permutate_layers(self, model):
-        old_modules = model.bert.encoder.layer
-        scrambled_modules = torch.nn.ModuleList()
-        # Now iterate over all layers,
-        # appending to the new module list according to the new order.
-        if self.rank > 0:
-            permutation = self.model_config.client_model_layers
-        else:
-            permutation = self.model_config.server_model_layers
-        self.logger.debug(f"model's layer: {permutation}")
-        for i in permutation:
-            assert i <= 11, permutation
-            scrambled_modules.append(old_modules[i])
-
-        # Create a copy of the model, modify it with the new list, and return
-        model_copy = copy.deepcopy(model)
-        model_copy.bert.encoder.layer = scrambled_modules
-        return model_copy
-
     def forward(self, inputs):
         output = self.backbone(**inputs)
         return output
@@ -68,16 +39,14 @@ class TokenClassification(BaseModels, ABC):
     def __init__(self, task_name):
         super().__init__(task_name)
 
-    def _build_config(self):
-        config = AutoConfig.from_pretrained(
-            self.model_config.config_name if self.model_config.config_name else self.model_config.model_name_or_path,
-            num_labels=num_labels,
-            finetuning_task=self.task_name if self.task_name else None,
-            # cache_dir=model_args.cache_dir,
-            revision=self.model_config.model_revision,
-            use_auth_token=True if model_args.use_auth_token else None,
-        )
-        return config
-
     def _build_model(self):
-        ...
+        backbone = AutoModelForTokenClassification.from_pretrained(
+            self.model_config.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=self.auto_config,
+            # cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+            # ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        )
+        return backbone

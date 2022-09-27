@@ -2,7 +2,7 @@
 
 import os
 from abc import ABC
-from utils import registry, pickle_read
+from utils import registry, pickle_read, pickle_write, check_cached_data
 from transformers import AutoTokenizer
 
 
@@ -32,16 +32,112 @@ class BaseDataLoader(ABC):
         else:
             self._load_federated_data_on_client()
 
-    def _load_federated_data_on_client(self):
-        raise NotImplementedError
-
     def _load_federated_data_on_server(self):
-        raise NotImplementedError
+
+        if os.path.isfile(self.cached_data_file):
+            self.logger.info(f"loading cached data ...")
+            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
+            train_examples_num_dict, valid_examples_num_dict, train_num, valid_num, test_num \
+                = pickle_read(self.cached_data_file)
+            # server doesn't use each client's train & test dataset
+            del train_features_dict, valid_features_dict
+
+        else:
+            self.logger.info(f"generating cached data ...")
+            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
+            train_examples_num_dict, valid_examples_num_dict = self._convert_examples_to_features()
+
+        if self.federated_config.do_mimic and self.federated_config.rank == 0:
+            with open(os.path.join(self.data_config.cache_dir, "server_write.flag"), "w") as file:
+                file.write("BaseServer wrote OK\n")
+
+        self.valid_dataloader = self.build_dataloader(valid_fedtures_all, "valid")
+        self.test_dataloader = self.build_dataloader(test_fedtures_all, "test")
+        self.train_examples_num_dict = train_examples_num_dict
+        self.valid_examples_num_dict = valid_examples_num_dict
+
+    def _load_federated_data_on_client(self):
+
+        train_dataloader_dict, valid_dataloader_dict = {}, {}
+
+        if self.federated_config.do_mimic:
+            self.logger.info(f"local rank {self.federated_config.rank} is waiting for processed features")
+            while not check_cached_data(self.data_config.cache_dir):
+                ...
+            self.logger.info(f"local rank {self.federated_config.rank} builds dataloader")
+            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
+            train_examples_num_dict, valid_examples_num_dict, train_num, valid_num, test_num \
+                = pickle_read(self.cached_data_file)
+            del valid_fedtures_all, test_fedtures_all
+
+            for idx in self.clients_list:
+                train_dataloader_dict[idx] = self.build_dataloader(train_features_dict[idx], "train")
+                valid_dataloader_dict[idx] = self.build_dataloader(valid_features_dict[idx], "valid")
+        else:
+            # Local data loading
+            self.logger.info("Sorry, the current glue_dataloader doesn't support local loading")
+            raise NotImplementedError
+
+        self.train_dataloader_dict = train_dataloader_dict
+        self.valid_dataloader_dict = valid_dataloader_dict
+        self.train_examples_num_dict = train_examples_num_dict
+        self.valid_examples_num_dict = valid_examples_num_dict
+        self.train_num, self.valid_num, self.test_num = train_num, valid_num, test_num
 
     def _load_centralized_data(self):
-        raise NotImplementedError
+        train_dataloader_dict, valid_dataloader_dict = {}, {}
+
+        if os.path.isfile(self.cached_data_file):
+            self.logger.info(f"loading cached data ...")
+            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
+            train_examples_num_dict, valid_examples_num_dict, train_num, valid_num, test_num \
+                = pickle_read(self.cached_data_file)
+        else:
+            self.logger.info(f"generating cached data ...")
+            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
+            train_examples_num_dict, valid_examples_num_dict = self._convert_examples_to_features()
+
+        train_features_all = []
+        for idx, train_features in train_features_dict.items():
+            train_features_all += list(train_features)
+
+        train_dataloader_dict[-1] = self.build_dataloader(train_features_all, "train")
+        valid_dataloader_dict[-1] = self.build_dataloader(valid_fedtures_all, "valid")
+
+        self.train_dataloader_dict = train_dataloader_dict
+        self.valid_dataloader_dict = valid_dataloader_dict
+        self.test_dataloader = self.build_dataloader(test_fedtures_all, "test")
 
     def _convert_examples_to_features(self):
+        raw_data = pickle_read(self.data_config.raw_dataset_path)
+        partition_data = pickle_read(self.data_config.partition_dataset_path)
+
+        train_examples_num_dict, valid_examples_num_dict = {}, {}
+        train_features_dict, valid_features_dict = {}, {}
+        valid_fedtures_all, test_fedtures_all = None, None
+
+        n_clients = self.attribute["clients_num"]
+        if n_clients != self.federated_config.clients_num:
+            raise ValueError(f"partition data have {n_clients} clients "
+                             f"that mismatches your input {self.federated_config.clients_num} clients")
+
+        federated_data = self._reader_examples(
+            raw_data, partition_data, n_clients,
+            train_examples_num_dict, valid_examples_num_dict,
+            train_features_dict, valid_features_dict,
+            valid_fedtures_all, test_fedtures_all
+        )
+
+        self.logger.info("saving processed features ...")
+        pickle_write(federated_data, self.cached_data_file)
+
+        return train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
+               train_examples_num_dict, valid_examples_num_dict,
+
+    def _reader_examples(self, raw_data, partition_data, n_clients,
+                         train_examples_num_dict, valid_examples_num_dict,
+                         train_features_dict, valid_features_dict,
+                         valid_fedtures_all=None, test_fedtures_all=None):
         raise NotImplementedError
 
     def _load_attributes(self):
@@ -52,8 +148,29 @@ class BaseDataLoader(ABC):
         if self.model_config.model_output_mode == "seq_classification":
             registry.register("num_labels", len(self.attribute["label_list"]))
 
+    def build_dataloader(self):
+        raise NotImplementedError
+
     def _build_tokenizer(self):
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_config.model_name_or_path)
+        # self.tokenizer = AutoTokenizer.from_pretrained(self.model_config.model_name_or_path)
+
+        if self.model_config.model_type in {"bloom", "gpt2", "roberta"}:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_config.model_name_or_path,
+                # cache_dir=self.model_config.cache_dir,
+                use_fast=True,
+                revision=self.model_config.model_revision,
+                use_auth_token=True if self.model_config.use_auth_token else None,
+                add_prefix_space=True,
+            )
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_config.model_name_or_path,
+                # cache_dir=self.model_config.cache_dir,
+                use_fast=True,
+                revision=self.model_config.model_revision,
+                use_auth_token=True if self.model_config.use_auth_token else None,
+            )
 
     @property
     def cached_data_file(self):

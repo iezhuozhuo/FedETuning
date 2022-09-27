@@ -22,10 +22,6 @@ class BaseModels(nn.Module, ABC):
         self.rank = config.federated_config.rank
         self.logger = registry.get("logger")
 
-    def _before_training(self):
-        self.auto_config = self._build_config()
-        self.backbone = self._build_model()
-
     def _build_config(self, **kwargs):
         auto_config = AutoConfig.from_pretrained(
             self.model_config.config_name if self.model_config.config_name else self.model_config.model_name_or_path,
@@ -51,8 +47,27 @@ class BaseModels(nn.Module, ABC):
     def _add_base_model(self):
         raise NotImplementedError
 
-    def _add_permutate_layers(self, model):
-        raise NotImplementedError
+    def _add_permutate_layers(self, backbone):
+        # TODO only support BERT-NLU Task
+        bert_modules = self.get_bert_module(backbone)
+        old_modules = bert_modules.encoder.layer
+        scrambled_modules = torch.nn.ModuleList()
+        # Now iterate over all layers,
+        # appending to the new module list according to the new order.
+        if self.rank > 0:
+            permutation = self.model_config.client_model_layers
+        else:
+            permutation = self.model_config.server_model_layers
+        self.logger.debug(f"model's layer: {permutation}")
+        for i in permutation:
+            assert i <= 11, permutation
+            scrambled_modules.append(old_modules[i])
+
+        # Create a copy of the model, modify it with the new list, and return
+        backbone_copy = copy.deepcopy(backbone)
+        bert_modules_copy = self.get_bert_module(backbone_copy)
+        bert_modules_copy.encoder.layer = scrambled_modules
+        return backbone_copy
 
     def _add_delta_model(self, backbone):
 
@@ -73,3 +88,14 @@ class BaseModels(nn.Module, ABC):
 
     def forward(self, inputs):
         raise NotImplementedError
+
+    def get_bert_module(self, backbone):
+
+        if self.model_config.model_type == "bert":
+            return backbone.bert
+        elif self.model_config.model_type == "roberta":
+            return backbone.roberta
+        elif self.model_config.model_type == "distilbert":
+            return backbone.distilbert
+        else:
+            raise NotImplementedError

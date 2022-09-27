@@ -3,8 +3,8 @@
 import os
 import numpy as np
 
+from utils import registry
 from data import BaseDataLoader
-from utils import registry, pickle_write, pickle_read, check_cached_data
 
 import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
@@ -22,81 +22,6 @@ class GlueDataLoader(BaseDataLoader):
         self.label_list = self.attribute["label_list"]
 
         self._load_data()
-
-    def _load_federated_data_on_server(self):
-        if os.path.isfile(self.cached_data_file):
-            self.logger.info(f"loading cached data ...")
-            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
-            train_examples_num_dict, valid_examples_num_dict, train_num, valid_num, test_num \
-                = pickle_read(self.cached_data_file)
-            # server doesn't use each client's train & test dataset
-            del train_features_dict, valid_features_dict
-
-        else:
-            self.logger.info(f"generating cached data ...")
-            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
-            train_examples_num_dict, valid_examples_num_dict = self._convert_examples_to_features()
-
-        if self.federated_config.do_mimic and self.federated_config.rank == 0:
-            with open(os.path.join(self.data_config.cache_dir, "server_write.flag"), "w") as file:
-                file.write("BaseServer wrote OK\n")
-
-        self.valid_dataloader = self.build_dataloader(valid_fedtures_all, "valid")
-        self.test_dataloader = self.build_dataloader(test_fedtures_all, "test")
-        self.train_examples_num_dict = train_examples_num_dict
-        self.valid_examples_num_dict = valid_examples_num_dict
-
-    def _load_federated_data_on_client(self):
-
-        train_dataloader_dict, valid_dataloader_dict = {}, {}
-
-        if self.federated_config.do_mimic:
-            self.logger.info(f"local rank {self.federated_config.rank} is waiting for processed features")
-            while not check_cached_data(self.data_config.cache_dir):
-                ...
-            self.logger.info(f"local rank {self.federated_config.rank} builds dataloader")
-            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
-            train_examples_num_dict, valid_examples_num_dict, train_num, valid_num, test_num \
-                = pickle_read(self.cached_data_file)
-            del valid_fedtures_all, test_fedtures_all
-
-            for idx in self.clients_list:
-                train_dataloader_dict[idx] = self.build_dataloader(train_features_dict[idx], "train")
-                valid_dataloader_dict[idx] = self.build_dataloader(valid_features_dict[idx], "valid")
-        else:
-            # Local data loading
-            self.logger.info("Sorry, the current glue_dataloader doesn't support local loading")
-            raise NotImplementedError
-
-        self.train_dataloader_dict = train_dataloader_dict
-        self.valid_dataloader_dict = valid_dataloader_dict
-        self.train_examples_num_dict = train_examples_num_dict
-        self.valid_examples_num_dict = valid_examples_num_dict
-        self.train_num, self.valid_num, self.test_num = train_num, valid_num, test_num
-
-    def _load_centralized_data(self):
-        train_dataloader_dict, valid_dataloader_dict = {}, {}
-
-        if os.path.isfile(self.cached_data_file):
-            self.logger.info(f"loading cached data ...")
-            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
-            train_examples_num_dict, valid_examples_num_dict, train_num, valid_num, test_num \
-                = pickle_read(self.cached_data_file)
-        else:
-            self.logger.info(f"generating cached data ...")
-            train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
-            train_examples_num_dict, valid_examples_num_dict = self._convert_examples_to_features()
-
-        train_features_all = []
-        for idx, train_features in train_features_dict.items():
-            train_features_all += list(train_features)
-
-        train_dataloader_dict[-1] = self.build_dataloader(train_features_all, "train")
-        valid_dataloader_dict[-1] = self.build_dataloader(valid_fedtures_all, "valid")
-
-        self.train_dataloader_dict = train_dataloader_dict
-        self.valid_dataloader_dict = valid_dataloader_dict
-        self.test_dataloader = self.build_dataloader(test_fedtures_all, "test")
 
     def build_dataloader(self, features, mode="train"):
         # Convert to Tensors and build dataset
@@ -125,19 +50,13 @@ class GlueDataLoader(BaseDataLoader):
 
         return dataloader
 
-    def _convert_examples_to_features(self):
+    def _reader_examples(self, raw_data, partition_data, n_clients,
+                         train_examples_num_dict, valid_examples_num_dict,
+                         train_features_dict, valid_features_dict,
+                         valid_fedtures_all=None, test_fedtures_all=None
+                         ):
 
-        raw_data = pickle_read(self.data_config.raw_dataset_path)
-        partition_data = pickle_read(self.data_config.partition_dataset_path)
-
-        train_examples_num_dict, valid_examples_num_dict = {}, {}
-        train_features_dict, valid_features_dict = {}, {}
         clients_partition_data = partition_data[self.partition_name]
-
-        n_clients = self.attribute["clients_num"]
-        if n_clients != self.federated_config.clients_num:
-            raise ValueError(f"partition data have {n_clients} clients "
-                             f"that mismatches your input {self.federated_config.clients_num} clients")
 
         # TODO multi-task examples
         self.logger.info("convert train examples into features ...")
@@ -180,8 +99,26 @@ class GlueDataLoader(BaseDataLoader):
             self.train_num, self.valid_num, self.test_num
         )
 
-        self.logger.info("saving processed features ...")
-        pickle_write(federated_data, self.cached_data_file)
+        return federated_data
 
-        return train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
-               train_examples_num_dict, valid_examples_num_dict,
+
+@registry.register_data("ner")
+class NERDataLoader(BaseDataLoader):
+    def __init__(self):
+        super().__init__()
+
+        self.output_mode = self.attribute["output_mode"]
+        self.label_list = self.attribute["label_list"]
+
+        self._load_data()
+
+    def _reader_examples(self, raw_data, partition_data, n_clients,
+                         train_examples_num_dict, valid_examples_num_dict,
+                         train_features_dict, valid_features_dict,
+                         valid_fedtures_all=None, test_fedtures_all=None
+                         ):
+        clients_partition_data = partition_data[self.partition_name]
+
+
+
+
