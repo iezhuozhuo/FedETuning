@@ -27,7 +27,7 @@ class SeqClassification(BaseModels, ABC):
         )
         return auto_config
 
-    def _build_model(self):
+    def _add_base_model(self):
         backbone = AutoModelForSequenceClassification.from_pretrained(
             self.model_config.model_name_or_path,
             from_tf=bool(".ckpt" in self.model_config.model_name_or_path),
@@ -37,16 +37,9 @@ class SeqClassification(BaseModels, ABC):
             use_auth_token=True if self.model_config.use_auth_token else None,
             # ignore_mismatched_sizes=self.model_config.ignore_mismatched_sizes,
         )
-
-        if getattr(self.model_config, "permutation_layers", None):
-            backbone = self.permutate_layers(backbone)
-
-        if self.model_config.tuning_type:
-            backbone = self._add_delta_model(backbone)
-
         return backbone
 
-    def permutate_layers(self, model):
+    def _add_permutate_layers(self, model):
         old_modules = model.bert.encoder.layer
         scrambled_modules = torch.nn.ModuleList()
         # Now iterate over all layers,
@@ -68,3 +61,23 @@ class SeqClassification(BaseModels, ABC):
     def forward(self, inputs):
         output = self.backbone(**inputs)
         return output
+
+
+@registry.register_model("token_classification")
+class TokenClassification(BaseModels, ABC):
+    def __init__(self, task_name):
+        super().__init__(task_name)
+
+    def _build_config(self):
+        config = AutoConfig.from_pretrained(
+            self.model_config.config_name if self.model_config.config_name else self.model_config.model_name_or_path,
+            num_labels=num_labels,
+            finetuning_task=self.task_name if self.task_name else None,
+            # cache_dir=model_args.cache_dir,
+            revision=self.model_config.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+        return config
+
+    def _build_model(self):
+        ...

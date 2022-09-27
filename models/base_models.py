@@ -26,24 +26,35 @@ class BaseModels(nn.Module, ABC):
         self.auto_config = self._build_config()
         self.backbone = self._build_model()
 
-    def _build_config(self):
-        raise NotImplementedError
+    def _build_config(self, **kwargs):
+        auto_config = AutoConfig.from_pretrained(
+            self.model_config.config_name if self.model_config.config_name else self.model_config.model_name_or_path,
+            num_labels=self.num_labels,
+            finetuning_task=self.task_name if self.task_name else None,
+            # cache_dir=self.model_config.cache_dir,
+            revision=self.model_config.model_revision,
+            use_auth_token=True if self.model_config.use_auth_token else None,
+        )
+        return auto_config
 
     def _build_model(self):
+        backbone = self._add_base_model()
+
+        if getattr(self.model_config, "permutation_layers", None):
+            backbone = self._add_permutate_layers(backbone)
+
+        if self.model_config.tuning_type:
+            backbone = self._add_delta_model(backbone)
+
+        return backbone
+
+    def _add_base_model(self):
         raise NotImplementedError
 
-    def permutate_layers(self, model):
-        raise NotImplementedError
-
-    def freezed_layers(self, model):
+    def _add_permutate_layers(self, model):
         raise NotImplementedError
 
     def _add_delta_model(self, backbone):
-        # . addressing a module inside the backbone model using a minimal description key.
-        # . provide the interface for modifying and inserting model which keeps the docs/IO the same as the module
-        #   before modification.
-        # . pass a pseudo input to determine the inter dimension of the delta models.
-        # . freeze a part of model parameters according to key.
 
         if any([True for PType in PromptType if PType in self.model_config.tuning_type]):
             # prefix tuning maybe in OpenDelta
@@ -62,15 +73,3 @@ class BaseModels(nn.Module, ABC):
 
     def forward(self, inputs):
         raise NotImplementedError
-
-    # @property
-    # def bert(self):
-    #
-    #     if self.model_config.model_type == "bert":
-    #         return self.backbone.bert
-    #     elif self.model_config.model_type == "roberta":
-    #         return self.backbone.roberta
-    #     elif self.model_config.model_type == "distilbert":
-    #         return self.backbone.distilbert
-    #     else:
-    #         raise NotImplementedError
