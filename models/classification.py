@@ -40,6 +40,9 @@ class TokenClassification(BaseModels, ABC):
         super().__init__(task_name)
 
         self.num_labels = registry.get("num_labels")
+        self.id2label = registry.get("id2label")
+        self.label2id = registry.get("label2id")
+
         self.auto_config = self._build_config(num_labels=self.num_labels)
         self.backbone = self._build_model()
 
@@ -53,4 +56,6 @@ class TokenClassification(BaseModels, ABC):
             use_auth_token=True if self.model_config.use_auth_token else None,
             # ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
         )
+        backbone.config.label2id = self.id2label
+        backbone.config.id2label = self.label2id
         return backbone

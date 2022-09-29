@@ -145,10 +145,18 @@ class BaseDataLoader(ABC):
         self.attribute = partition_data[self.partition_name]["attribute"]
 
     def _build_registry(self):
+
         if self.model_config.model_output_mode == "seq_classification":
             registry.register("num_labels", len(self.attribute["label_list"]))
+        elif self.model_config.model_output_mode == "token_classification":
+            label_list = self.attribute["label_list"]
+            registry.register("num_labels", len(label_list))
+            label2id = {l: i for i, l in enumerate(label_list)}
+            id2label = {i: l for i, l in enumerate(label_list)}
+            registry.register("label2id", label2id)
+            registry.register("id2label", id2label)
 
-    def build_dataloader(self):
+    def build_dataloader(self, features, mode="train"):
         raise NotImplementedError
 
     def _build_tokenizer(self):

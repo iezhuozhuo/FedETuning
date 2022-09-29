@@ -1,14 +1,16 @@
 """BaseModel for FedETuning"""
 
+import copy
 from abc import ABC
 from utils import registry
+from models.utils import PromptType
+
+import torch
 import torch.nn as nn
-from transformers import trainer
+from transformers import trainer, AutoConfig
 
 from opendelta import AutoDeltaConfig
 from opendelta.auto_delta import AutoDeltaModel
-
-from models.utils import PromptType
 
 
 class BaseModels(nn.Module, ABC):
@@ -25,11 +27,11 @@ class BaseModels(nn.Module, ABC):
     def _build_config(self, **kwargs):
         auto_config = AutoConfig.from_pretrained(
             self.model_config.config_name if self.model_config.config_name else self.model_config.model_name_or_path,
-            num_labels=self.num_labels,
             finetuning_task=self.task_name if self.task_name else None,
             # cache_dir=self.model_config.cache_dir,
             revision=self.model_config.model_revision,
             use_auth_token=True if self.model_config.use_auth_token else None,
+            **kwargs
         )
         return auto_config
 

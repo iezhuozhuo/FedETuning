@@ -67,3 +67,12 @@ class GlueEval(BaseEval, ABC):
         results.update(result)
 
         return results
+
+
+@registry.register_eval("conll")
+class CoNLLEval(BaseEval, ABC):
+    def __init__(self, device, metric):
+        super(CoNLLEval, self).__init__(device, metric)
+
+    def test_and_eval(self, valid_dl, model, model_type, model_output_mode):
+        ...
