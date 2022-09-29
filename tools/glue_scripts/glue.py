@@ -54,7 +54,6 @@ def get_partition_data(examples, num_classes, num_clients, label_vocab, dir_alph
     )
     # assert (len(clients_partition_data) == num_clients,
     #         "The partition function is wrong, please check")
-
     partition_data = {}
     for idx in range(len(clients_partition_data)):
         client_idxs = clients_partition_data[idx]
