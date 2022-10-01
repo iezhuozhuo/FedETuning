@@ -27,18 +27,31 @@ world_size=${#device[@]}
 if [ ${task_name} == "qnli" ];
 then
   max_seq=256
+elif [ ${task_name} == "conll" ];
+then
+  max_seq=32
 else
   max_seq=128
 fi
 echo "${task_name}'s max_seq is ${max_seq}"
 
+#CUDA_VISIBLE_DEVICES=${device[0]} python main.py \
+#--model_name_or_path ${run_dirs}/pretrain/nlp/roberta-base/ \
+#--output_dir ${run_dirs}/output/fedglue \
+#--task_name ${task_name} \
+#--fl_algorithm ${fl_algorithm} \
+#--raw_dataset_path ${run_dirs}/data/fedglue \
+#--partition_dataset_path ${run_dirs}/data/fedglue \
+#--max_seq_length ${max_seq}  \
+#--world_size ${world_size}
+
 CUDA_VISIBLE_DEVICES=${device[0]} python main.py \
 --model_name_or_path ${run_dirs}/pretrain/nlp/roberta-base/ \
---output_dir ${run_dirs}/output/fedglue \
+--output_dir ${run_dirs}/output/fedner \
 --task_name ${task_name} \
 --fl_algorithm ${fl_algorithm} \
---raw_dataset_path ${run_dirs}/data/fedglue \
---partition_dataset_path ${run_dirs}/data/fedglue \
+--raw_dataset_path ${run_dirs}/data/fedner \
+--partition_dataset_path ${run_dirs}/data/fedner \
 --max_seq_length ${max_seq}  \
 --world_size ${world_size}
 

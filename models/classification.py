@@ -6,6 +6,7 @@ import torch
 from utils import registry
 from models.base_models import BaseModels
 from transformers import AutoModelForTokenClassification, AutoModelForSequenceClassification
+from transformers import RobertaForTokenClassification, trainer
 
 
 @registry.register_model("seq_classification")
@@ -56,6 +57,10 @@ class TokenClassification(BaseModels, ABC):
             use_auth_token=True if self.model_config.use_auth_token else None,
             # ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
         )
-        backbone.config.label2id = self.id2label
-        backbone.config.id2label = self.label2id
+        backbone.config.label2id = self.label2id
+        backbone.config.id2label = self.id2label
         return backbone
+
+    def forward(self, inputs):
+        output = self.backbone(**inputs)
+        return output

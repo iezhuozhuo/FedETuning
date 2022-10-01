@@ -227,6 +227,8 @@ class BaseClientTrainer(ClientTrainer, ABC):
 
     def _on_epoch(self, train_loader, optimizer, scheduler):
         for step, batch in enumerate(train_loader):
+            # if step >= 2:
+            #     break
             self._model.train()
             batch = tuple(t.to(self.device) for t in batch)
             inputs = {'input_ids': batch[0],
@@ -273,7 +275,8 @@ class BaseClientTrainer(ClientTrainer, ABC):
 
                 self.global_step += 1
             self.total += label.size(0)
-            self.correct += (predicted == label).sum().item()
+            if self.model_config.model_output_mode == "seq_classification":
+                self.correct += (predicted == label).sum().item()
 
     def _on_epoch_end(self, idx):
         """on epoch end"""
