@@ -10,7 +10,6 @@ from data.utils import conll_convert_examples_to_features
 import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
-
 from transformers import glue_convert_examples_to_features
 
 
@@ -23,33 +22,6 @@ class GlueDataLoader(BaseDataLoader):
         self.label_list = self.attribute["label_list"]
 
         self._load_data()
-
-    def build_dataloader(self, features, mode="train"):
-        # Convert to Tensors and build dataset
-        all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-        all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-
-        if self.model_config.model_type not in ["distilbert", "roberta"]:
-            all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
-        else:
-            # distilbert and roberta don't have token_type_ids
-            all_token_type_ids = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-
-        if self.output_mode == "classification":
-            all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
-        elif self.output_mode == "regression":
-            all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
-
-        if self.model_config.tuning_type and "prompt" in self.model_config.tuning_type:
-            all_loss_ids = torch.tensor([f.loss_ids for f in features], dtype=torch.float)
-            dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_loss_ids)
-        else:
-            dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
-
-        sampler = RandomSampler(dataset) if mode == "train" else SequentialSampler(dataset)
-        dataloader = DataLoader(dataset, sampler=sampler, batch_size=self.training_config.train_batch_size)
-
-        return dataloader
 
     def _reader_examples(self, raw_data, partition_data, n_clients,
                          train_examples_num_dict, valid_examples_num_dict,
@@ -162,35 +134,6 @@ class NERDataLoader(BaseDataLoader):
 
         return federated_data
 
-
-    def build_dataloader(self, features, mode="train"):
-        # Convert to Tensors and build dataset
-        all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-        all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-
-        if self.model_config.model_type not in ["distilbert", "roberta"]:
-            all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
-        else:
-            # distilbert and roberta don't have token_type_ids
-            all_token_type_ids = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-
-        all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
-
-        # if self.output_mode == "classification":
-        #     all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
-        # elif self.output_mode == "regression":
-        #     all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
-
-        if self.model_config.tuning_type and "prompt" in self.model_config.tuning_type:
-            all_loss_ids = torch.tensor([f.loss_ids for f in features], dtype=torch.float)
-            dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_loss_ids)
-        else:
-            dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
-
-        sampler = RandomSampler(dataset) if mode == "train" else SequentialSampler(dataset)
-        dataloader = DataLoader(dataset, sampler=sampler, batch_size=self.training_config.train_batch_size)
-
-        return dataloader
 
 
 

@@ -25,9 +25,10 @@ model_config:
 #  tuning_type: prefix_robert-base
 
 training_config:
-  per_device_train_batch_size: 32
-  num_train_epochs: 10
-  learning_rate: 5e-5
+  per_device_train_batch_size: 8
+  num_train_epochs: 3
+#  learning_rate: 5e-5
+  learning_rate: 2e-5
 #  metric_name: glue
   metric_name: conll
   do_predict: true
