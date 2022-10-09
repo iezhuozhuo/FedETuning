@@ -133,7 +133,3 @@ class NERDataLoader(BaseDataLoader):
         )
 
         return federated_data
-
-
-
-

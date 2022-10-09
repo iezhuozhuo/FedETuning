@@ -173,10 +173,10 @@ class BaseDataLoader(ABC):
             # distilbert and roberta don't have token_type_ids
             all_token_type_ids = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
 
-        if "classification" in self.output_mode:
-            all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
-        elif self.output_mode == "regression":
+        if self.output_mode == "regression":
             all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
+        else:
+            all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
 
         if self.model_config.tuning_type and "prompt" in self.model_config.tuning_type:
             all_loss_ids = torch.tensor([f.loss_ids for f in features], dtype=torch.float)
