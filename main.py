@@ -1,4 +1,4 @@
-"""main.py for FedETuning"""
+"""main for FedETuning"""
 
 from utils import registry
 from utils import build_config

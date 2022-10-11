@@ -64,10 +64,23 @@ class BaseSyncServerHandler(ParameterServerBackendHandler, ABC):
         # metric line
         self.metric_name = self.metric.metric_name
         times = registry.get("run_time")
-        self.metric_line = f"{times}_{self.model_config.model_type}_{self.training_config.tuning_type}_" \
-                           f"cli={self.federated_config.clients_num}_alp={self.federated_config.alpha}_" \
-                           f"sap={self.federated_config.sample}_lr={self.training_config.learning_rate}_" \
-                           f"epo={self.training_config.num_train_epochs}_"
+        if self.training_config.do_grid:
+            from configs.tuning import get_delta_key
+            key_name, key_abb = get_delta_key(self.training_config.tuning_type)
+            delta_config = registry.get("delta_config")
+            if key_name:
+                grid_info = "=".join([key_abb, str(delta_config[key_name])])
+            else:
+                grid_info = ""
+            self.metric_line = f"{times}_{self.model_config.model_type}_{self.training_config.tuning_type}_" \
+                               f"cli={self.federated_config.clients_num}_alp={self.federated_config.alpha}_" \
+                               f"sap={self.federated_config.sample}_epo={self.training_config.num_train_epochs}_" \
+                               f"lr={self.training_config.learning_rate}_{grid_info}_"
+        else:
+            self.metric_line = f"{times}_{self.model_config.model_type}_{self.training_config.tuning_type}_" \
+                               f"cli={self.federated_config.clients_num}_alp={self.federated_config.alpha}_" \
+                               f"sap={self.federated_config.sample}_lr={self.training_config.learning_rate}_" \
+                               f"epo={self.training_config.num_train_epochs}_"
 
         # global model
         self.glo_save_file = os.path.join(

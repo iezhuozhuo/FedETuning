@@ -53,7 +53,7 @@ CUDA_VISIBLE_DEVICES=${device[0]} python main.py \
 --world_size ${world_size} \
 --port ${port} &
 
-sleep 2s
+#sleep 2s
 
 for(( i=1;i<${world_size};i++))
 do
@@ -70,7 +70,7 @@ do
     --max_seq_length ${max_seq} \
     --world_size ${world_size} \
     --port ${port} &
-    sleep 2s
+#    sleep 2s
 }
 done
 

@@ -18,3 +18,6 @@ class TrainArguments(TrainingArguments):
     is_decreased_valid_metric: bool = field(
         default=False
     )
+    do_grid: bool = field(
+        default=False, metadata={"help": "whether to do grid search"}
+    )

@@ -15,31 +15,8 @@ from configs import ModelArguments, DataTrainingArguments, TrainArguments, Feder
 from configs.tuning import get_delta_config
 
 
-tuning_key_check_dict = {
-    "adapter": ["unfrozen_modules", "bottleneck_dim", ]
-}
-
-
-# class RemainArgHfArgumentParser(HfArgumentParser):
-#     def parse_json_file(self, json_file: str, return_remaining_args=True):
-#         """
-#         Alternative helper method that does not use `argparse` at all, instead loading a json file and populating the
-#         dataclass types.
-#         """
-#         data = json.loads(Path(json_file).read_text())
-#         outputs = []
-#         for dtype in self.dataclass_types:
-#             keys = {f.name for f in dataclasses.fields(dtype) if f.init}
-#             inputs = {k: data.pop(k) for k in list(data.keys()) if k in keys}
-#             obj = dtype(**inputs)
-#             outputs.append(obj)
-#
-#         remain_args = argparse.ArgumentParser()
-#         remain_args.__dict__.update(data)
-#         if return_remaining_args:
-#             return (*outputs, remain_args)
-#         else:
-#             return (*outputs,)
+grid_hyper_parameters = ["tuning_type", "prefix_token_num", "prefix_token_num", "bottleneck_dim",
+                         "learning_rate", "dataset_name", "metric_name", "model_output_mode"]
 
 
 class Config(ABC):
@@ -82,6 +59,12 @@ class Config(ABC):
             else:
                 delta_config = delta_args
 
+        # TODO hard code for do grid search
+        if self.T.do_grid:
+            for key in delta_config:
+                if getattr(self.M, key, None):
+                    delta_config[key] = getattr(self.M, key)
+
         registry.register("delta_config", delta_config)
 
         for config in [self.T, self.M, self.F, self.D]:
@@ -93,6 +76,7 @@ class Config(ABC):
         # TODO hard code
         if "fed" in self.F.fl_algorithm and "lora" in self.T.tuning_type:
             self.T.num_train_epochs = 1
+            delta_config["num_train_epochs"] = self.T.num_train_epochs
 
     @property
     def M(self):
@@ -113,6 +97,11 @@ class Config(ABC):
 
 def amend_config(model_args, data_args, training_args, federated_args):
     config = Config(model_args, data_args, training_args, federated_args)
+
+    if config.F.rank > 0:
+        # let server firstly start
+        time.sleep(2)
+
     # load customer config (hard code)
     # TODO args in config.yaml can overwrite --arg
     root_folder = registry.get("root_folder")
@@ -123,6 +112,9 @@ def amend_config(model_args, data_args, training_args, federated_args):
             if values:
                 args = getattr(config, key)
                 for k, v in values.items():
+                    if config.T.do_grid and k in grid_hyper_parameters:
+                        # grid search not overwrite --arg
+                        continue
                     setattr(args, k, v)
 
     # set training path
@@ -146,9 +138,11 @@ def amend_config(model_args, data_args, training_args, federated_args):
     make_sure_dirs(config.T.save_dir)
     config.T.checkpoint_dir = os.path.join(config.T.save_dir, "saved_model")
     make_sure_dirs(config.T.checkpoint_dir)
+
     # set phase
     phase = "train" if config.T.do_train else "evaluate"
     registry.register("phase", phase)
+
     # set metric log path
     times = time.strftime("%Y%m%d%H%M%S", time.localtime())
     registry.register("run_time", times)
@@ -158,6 +152,7 @@ def amend_config(model_args, data_args, training_args, federated_args):
 
     # set federated_args
     if config.F.do_mimic and config.F.rank == 0:
+        # wait for server processes data
         server_write_flag_path = os.path.join(config.D.cache_dir, "server_write.flag")
         rm_file(server_write_flag_path)
 
@@ -166,6 +161,7 @@ def amend_config(model_args, data_args, training_args, federated_args):
 
     config.check_config()
     registry.register("config", config)
+
     return config
 
 
@@ -188,7 +184,5 @@ def build_config():
     logger.debug(f"TrainBaseInfo: {config.M.model_type}_{delta_config['delta_type']}_"
                  f"cli={config.F.clients_num}_alp={config.F.alpha}_cr={config.F.rounds}_sap={config.F.sample}_"
                  f"lr={config.T.learning_rate}_epo={config.T.num_train_epochs}")
-
-    # exit()
 
     return config

@@ -65,6 +65,22 @@ class ModelArguments:
         default=None,
         metadata={"help": "The Efficient Fine-tuning type, support {adapter, prompt, lora, prefix}"}
     )
+    lora_rank: int = field(
+        default=8,
+        metadata={"help": "lora specific parameters"}
+    )
+    lora_alpha: int = field(
+        default=8,
+        metadata={"help": "lora specific parameters"}
+    )
+    prefix_token_num: int = field(
+        default=16,
+        metadata={"help": "prefix-tuning specific parameters"}
+    )
+    bottleneck_dim: int = field(
+        default=64,
+        metadata={"help": "adapter specific parameters"}
+    )
 
     def __post_init__(self):
         ...

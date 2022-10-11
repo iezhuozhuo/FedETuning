@@ -1,6 +1,6 @@
 data_config:
-#  dataset_name: glue
-  dataset_name: ner
+  dataset_name: glue
+#  dataset_name: ner
 
 
 federated_config:
@@ -16,8 +16,8 @@ federated_config:
 
 model_config:
   model_type: roberta
-#  model_output_mode: seq_classification
-  model_output_mode: token_classification
+  model_output_mode: seq_classification
+#  model_output_mode: token_classification
   permutation_layers: false
   client_model_layers: [0,1,2,3,4,5]
   server_model_layers: [0,1,2,3,4,5]
@@ -29,11 +29,11 @@ model_config:
 #  tuning_type: prefix_robert-base
 
 training_config:
-#  per_device_train_batch_size: 32
-  per_device_train_batch_size: 8
+  per_device_train_batch_size: 32
+#  per_device_train_batch_size: 8
   num_train_epochs: 1
   learning_rate: 2e-5
-  metric_name: conll
-#  metric_name: glue
+#  metric_name: conll
+  metric_name: glue
   seed: 42
 
