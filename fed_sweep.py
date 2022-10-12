@@ -11,6 +11,7 @@ from configs.tuning import hyperparameter_grid
 def run_process(proc):
     os.system(proc)
 
+
 run_dirs = sys.argv[1]
 fl_algorithm = sys.argv[2]
 task_name = sys.argv[3]
@@ -86,6 +87,6 @@ for parameter in it.product(*list(hyper_parameter.values())):
 run_process("sleep 3s")
 logger.warning(f"run {len(cmds)} grid-search tasks for roberta_{task_name}_{tuning_type}")
 
-# run_process(cmds[0])
-pool = Pool(processes=n_gpu)
-pool.map(run_process, cmds)
+run_process(cmds[0])
+# pool = Pool(processes=n_gpu)
+# pool.map(run_process, cmds)

@@ -65,6 +65,9 @@ class Config(ABC):
                 if getattr(self.M, key, None):
                     delta_config[key] = getattr(self.M, key)
 
+                if key == "learning_rate":
+                    delta_config[key] = getattr(self.T, key)
+
         registry.register("delta_config", delta_config)
 
         for config in [self.T, self.M, self.F, self.D]:
@@ -185,4 +188,6 @@ def build_config():
                  f"cli={config.F.clients_num}_alp={config.F.alpha}_cr={config.F.rounds}_sap={config.F.sample}_"
                  f"lr={config.T.learning_rate}_epo={config.T.num_train_epochs}")
 
+    # logger.debug(delta_config)
+    # exit()
     return config
