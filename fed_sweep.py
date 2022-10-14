@@ -87,6 +87,6 @@ for parameter in it.product(*list(hyper_parameter.values())):
 run_process("sleep 3s")
 logger.warning(f"run {len(cmds)} grid-search tasks for roberta_{task_name}_{tuning_type}")
 
-run_process(cmds[0])
-# pool = Pool(processes=n_gpu)
-# pool.map(run_process, cmds)
+# run_process(cmds[0])  # debug
+pool = Pool(processes=n_gpu)
+pool.map(run_process, cmds)
