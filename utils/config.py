@@ -12,7 +12,7 @@ from transformers import HfArgumentParser
 from utils import make_sure_dirs, rm_file
 from utils.register import registry
 from configs import ModelArguments, DataTrainingArguments, TrainArguments, FederatedTrainingArguments
-from configs.tuning import get_delta_config
+from configs.tuning import get_delta_config, get_delta_key
 
 
 grid_hyper_parameters = ["tuning_type", "prefix_token_num", "prefix_token_num", "bottleneck_dim",
@@ -50,8 +50,9 @@ class Config(ABC):
 
     def config_check_tuning(self):
 
-        if not self.M.tuning_type:
+        if not self.M.tuning_type or "fine" in self.M.tuning_type:
             delta_config = {"delta_type": "fine-tuning"}
+            self.M.tuning_type = ""
         else:
             delta_args = get_delta_config(self.M.tuning_type)
             if self.D.task_name in delta_args:
@@ -163,6 +164,16 @@ def amend_config(model_args, data_args, training_args, federated_args):
         config.F.partition_method = f"clients={config.F.clients_num}_alpha={config.F.alpha}"
 
     config.check_config()
+
+    if config.T.do_grid:
+        key_name, key_abb = get_delta_key(config.T.tuning_type)
+        delta_config = registry.get("delta_config")
+        if key_name:
+            grid_info = "=".join([key_abb, str(delta_config[key_name])])
+        else:
+            grid_info = ""
+        registry.register("grid_info", grid_info)
+
     registry.register("config", config)
 
     return config
