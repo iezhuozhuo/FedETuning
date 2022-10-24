@@ -8,22 +8,25 @@ from transformers import glue_output_modes as output_modes
 from utils import make_sure_dirs
 from tools.glue_scripts.partition import GlueDataPartition
 from tools.glue_scripts.glue_utils import glue_processors as processors
+from tools.glue_scripts.local import build_vaild
 
 
 def parser_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", default=None, type=str, required=True,
         help="The input data dir. Should contain the .tsv files (or other data files) for the task.")
-    parser.add_argument("--task", default=None, type=str, required=True,
+    parser.add_argument("--task", default=None, type=str,
         help="Task name")
     parser.add_argument("--output_dir", default=None, type=str, required=True,
         help="The output directory to save partition or raw data")
-    parser.add_argument("--clients_num", default=None, type=int, required=True,
+    parser.add_argument("--clients_num", default=None, type=int,
         help="All clients numbers")
     parser.add_argument("--alpha", default=None, type=float,
         help="The label skew degree.")
     parser.add_argument("--overwrite", default=None, type=int,
         help="overwrite")
+    parser.add_argument("--local_test", default=None, type=int,
+        help="construct local test")
 
     args = parser.parse_args()
     return args
@@ -128,7 +131,11 @@ def convert_glue_to_device_pkl(args):
         with open(args.output_partition_file, "wb") as file:
             pickle.dump(partition_data, file)
 
-    logger.info("end")
+    if args.local_test:
+        method = f"clients={args.clients_num}_alpha={args.alpha}"
+        partition_data = build_vaild(data, partition_data, method)
+        with open(args.output_partition_file, "wb") as file:
+            pickle.dump(partition_data, file)
 
 
 def convert_glue_to_silo_pkl(args):
@@ -173,43 +180,45 @@ if __name__ == "__main__":
     # tasks = ["MRPC"]
 
     # Cross-Device Setting
-    # client_nums = [100, 10]
-    # args.overwrite = True
-    # for task in tasks:
-    #     for client_num in client_nums:
-    #         args.clients_num = client_num
-    #         args.task = task
-    #         args.data_dir = os.path.join(data_dir, args.task)
-    #         args.output_dir = os.path.join(output_dir, "fedglue")
-    #         make_sure_dirs(args.output_dir)
-    #         args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
-    #         args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
-    #
-    #         logger.info(f"clients_num: {args.clients_num}")
-    #         logger.info(f"data_dir: {args.data_dir}")
-    #         logger.info(f"output_dir: {args.output_dir}")
-    #         logger.info(f"output_data_file: {args.output_data_file}")
-    #         logger.info(f"output_partition_file: {args.output_partition_file}")
-    #
-    #         convert_glue_to_device_pkl(args)
+    client_nums = [100, 10]
+    args.overwrite = True
+    for task in tasks:
+        for client_num in client_nums:
+            args.clients_num = client_num
+            args.task = task
+            args.data_dir = os.path.join(data_dir, args.task)
+            args.output_dir = os.path.join(output_dir, "fedglue")
+            make_sure_dirs(args.output_dir)
+            args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
+            args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
+
+            logger.info(f"clients_num: {args.clients_num}")
+            logger.info(f"data_dir: {args.data_dir}")
+            logger.info(f"output_dir: {args.output_dir}")
+            logger.info(f"output_data_file: {args.output_data_file}")
+            logger.info(f"output_partition_file: {args.output_partition_file}")
+            logger.info(f"partition method: clients={args.clients_num}_alpha={args.alpha}")
+            logger.info("")
+            convert_glue_to_device_pkl(args)
+
 
     # Cross-Silo
-    args.output_dir = os.path.join(output_dir, "silos")
-    make_sure_dirs(args.output_dir)
-    args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
-    args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
-    data, partition_data = {}, {}
-    for task in tasks:
-        args.task = task
-        args.data_dir = os.path.join(data_dir, args.task)
-        clients_data, clients_partition_data = convert_glue_to_silo_pkl(args)
-        data[task.lower()] = clients_data
-        partition_data[task.lower()] = clients_partition_data
-
-    with open(args.output_data_file, "wb") as file:
-        pickle.dump(data, file)
-
-    with open(args.output_partition_file, "wb") as file:
-        pickle.dump(partition_data, file)
+    # args.output_dir = os.path.join(output_dir, "silos")
+    # make_sure_dirs(args.output_dir)
+    # args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
+    # args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
+    # data, partition_data = {}, {}
+    # for task in tasks:
+    #     args.task = task
+    #     args.data_dir = os.path.join(data_dir, args.task)
+    #     clients_data, clients_partition_data = convert_glue_to_silo_pkl(args)
+    #     data[task.lower()] = clients_data
+    #     partition_data[task.lower()] = clients_partition_data
+    #
+    # with open(args.output_data_file, "wb") as file:
+    #     pickle.dump(data, file)
+    #
+    # with open(args.output_partition_file, "wb") as file:
+    #     pickle.dump(partition_data, file)
 
     logger.info("end")
