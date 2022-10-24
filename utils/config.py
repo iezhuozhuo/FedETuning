@@ -14,7 +14,6 @@ from utils.register import registry
 from configs import ModelArguments, DataTrainingArguments, TrainArguments, FederatedTrainingArguments
 from configs.tuning import get_delta_config, get_delta_key
 
-
 grid_hyper_parameters = ["tuning_type", "prefix_token_num", "prefix_token_num", "bottleneck_dim",
                          "learning_rate", "dataset_name", "metric_name", "model_output_mode"]
 
@@ -173,6 +172,16 @@ def amend_config(model_args, data_args, training_args, federated_args):
         else:
             grid_info = ""
         registry.register("grid_info", grid_info)
+
+        config.T.metric_line = f"{times}_{config.M.model_type}_{config.T.tuning_type}_" \
+                               f"cli={config.F.clients_num}_alp={config.F.alpha}_" \
+                               f"sap={config.F.sample}_epo={config.T.num_train_epochs}_" \
+                               f"lr={config.T.learning_rate}_{grid_info}_"
+    else:
+        config.T.metric_line = f"{times}_{config.M.model_type}_{config.T.tuning_type}_" \
+                               f"cli={config.F.clients_num}_alp={config.F.alpha}_" \
+                               f"sap={config.F.sample}_epo={config.T.num_train_epochs}_" \
+                               f"lr={config.T.learning_rate}_"
 
     registry.register("config", config)
 

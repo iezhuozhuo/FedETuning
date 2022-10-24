@@ -18,6 +18,9 @@ class TrainArguments(TrainingArguments):
     is_decreased_valid_metric: bool = field(
         default=False
     )
+    patient_times: int = field(
+        default=10,
+    )
     do_grid: bool = field(
         default=False, metadata={"help": "whether to do grid search"}
     )

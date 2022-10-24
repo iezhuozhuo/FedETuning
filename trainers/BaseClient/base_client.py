@@ -51,6 +51,10 @@ class BaseClientTrainer(ClientTrainer, ABC):
         self.loc_test_metric = {}
         # key: client idx, value: serialized params
         self.loc_best_params = {}
+        # local patient times
+        self.loc_patient_times = 0
+        # local early stop
+        self.stop_early = False
 
         self.metric_name = self.metric.metric_name
         self._model.to(self.device)
@@ -94,6 +98,9 @@ class BaseClientTrainer(ClientTrainer, ABC):
             self._on_epoch_begin()
             self._on_epoch(train_loader, optimizer, scheduler)
             self._on_epoch_end(idx)
+            if self.federated_config.pson and self.stop_early:
+                self.logger.critical(f"local stop early in {epoch}")
+                break
 
     def _get_dataloader(self, dataset, client_id: int):
         """Get :class:`DataLoader` for ``client_id``."""
@@ -274,6 +281,7 @@ class BaseClientTrainer(ClientTrainer, ABC):
                 scheduler.step()  # Update learning rate schedule
 
                 self.global_step += 1
+
             self.total += label.size(0)
             if self.model_config.model_output_mode == "seq_classification":
                 self.correct += (predicted == label).sum().item()
@@ -306,11 +314,17 @@ class BaseClientTrainer(ClientTrainer, ABC):
         if self.loc_best_metric[idx] < test_metric:
             self.loc_best_metric[idx] = test_metric
             self.loc_best_params[idx] = SerializationTool.serialize_model(self._model)
+            self.loc_patient_times = 0
+        else:
+            self.loc_patient_times += 1
 
         self.logger.debug(f"{self.data_config.task_name.upper()} Eval, "
                           f"Client:{idx}, Loss:{test_loss:.3f}, "
                           f"Current {self.metric_name}:{test_metric:.3f}, "
                           f"Best {self.metric_name}:{self.loc_best_metric[idx]:.3f}")
+
+        if self.loc_patient_times >= self.training_config.patient_times:
+            self.stop_early = True
 
 
 class BaseClientManager(PassiveClientManager, ABC):

@@ -177,7 +177,8 @@ hyperparameter_grid = {
     # prefix lr from [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2] and prefix_token_num from [8, 16, 64]
 
     "fine-tuning": {
-        "learning_rate": [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
+        # "learning_rate": [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
+        "learning_rate": [5e-4, 1e-3],
     },
     "prefix": {
         "learning_rate": [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
