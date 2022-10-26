@@ -310,7 +310,7 @@ class BaseClientTrainer(ClientTrainer, ABC):
 
         # TODO hard code
         if not self.loc_best_metric.get(idx, None):
-            self.loc_best_metric[idx] = 0.0
+            self.loc_best_metric[idx] = float('-inf')
         if self.loc_best_metric[idx] < test_metric:
             self.loc_best_metric[idx] = test_metric
             self.loc_best_params[idx] = SerializationTool.serialize_model(self._model)
