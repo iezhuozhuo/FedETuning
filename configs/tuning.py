@@ -178,7 +178,7 @@ hyperparameter_grid = {
 
     "fine-tuning": {
         "learning_rate": [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
-        # "learning_rate": [3e-4],
+        # "learning_rate": [5e-5],
     },
     "prefix": {
         "learning_rate": [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],

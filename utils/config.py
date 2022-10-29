@@ -65,7 +65,7 @@ class Config(ABC):
                 if getattr(self.M, key, None):
                     delta_config[key] = getattr(self.M, key)
 
-                if key == "learning_rate":
+                if key == "learning_rate" or key == "num_train_epochs":
                     delta_config[key] = getattr(self.T, key)
 
         registry.register("delta_config", delta_config)
