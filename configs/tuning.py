@@ -4,14 +4,14 @@ all_delta_config = {
     "adapter_roberta-base":
         {
             "delta_type": "adapter",
-            "learning_rate": 3e-4,
+            "learning_rate": 1e-3,
             "unfrozen_modules": [
                 "deltas",
                 "layer_norm",
                 "final_layer_norm",
                 "classifier",
             ],
-            "bottleneck_dim": 24,
+            "bottleneck_dim": 16,
         },
     'soft_prompt_roberta-base':
         {
@@ -62,13 +62,13 @@ all_delta_config = {
             "mrpc":
                 {
                     "delta_type": "lora",
-                    "learning_rate": 0.0004,
-                    "lora_alpha": 8,
-                    "lora_rank": 8,
+                    "learning_rate": 0.001,
+                    "lora_alpha": 16,
+                    "lora_rank": 16,
                     "non_linearity": "gelu_new",
                     "num_train_epochs": 30,
                     "per_device_eval_batch_size": 100,
-                    "per_device_train_batch_size": 16,
+                    "per_device_train_batch_size": 32,
                     "unfrozen_modules": [
                         "classifier",
                         "deltas",
@@ -159,12 +159,12 @@ all_delta_config = {
     "prefix_roberta-base":
         {
             "delta_type": "prefix",
-            "learning_rate": 3e-4,
+            "learning_rate": 1e-3,
             "unfrozen_modules": [
                 "deltas",
                 "classifier",
             ],
-            "prefix_token_num": 64
+            "prefix_token_num": 16
         }
 }
 

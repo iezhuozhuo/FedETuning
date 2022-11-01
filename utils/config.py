@@ -180,7 +180,7 @@ def amend_config(model_args, data_args, training_args, federated_args):
     else:
         config.T.metric_line = f"{times}_{config.M.model_type}_{config.T.tuning_type}_" \
                                f"cli={config.F.clients_num}_alp={config.F.alpha}_" \
-                               f"sap={config.F.sample}_epo={config.T.num_train_epochs}_" \
+                               f"sap={config.F.sample}_rd={config.F.rounds}_epo={config.T.num_train_epochs}_" \
                                f"lr={config.T.learning_rate}_"
 
     registry.register("config", config)
