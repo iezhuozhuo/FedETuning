@@ -68,7 +68,7 @@ def convert_glue_to_device_pkl(args):
 
     logger.info("reading examples ...")
 
-    if os.path.isfile(args.output_data_file):
+    if os.path.isfile(args.output_data_file) and not args.overwrite:
         logger.info(f"Examples in {args.output_data_file} have existed ...")
         with open(args.output_data_file, "rb") as file:
             data = pickle.load(file)
@@ -76,17 +76,31 @@ def convert_glue_to_device_pkl(args):
         output_mode, label_list = data["output_mode"], data["label_list"]
     else:
         logger.info(f"Generating examples from {args.data_dir} ...")
-        train_examples, original_valid_examples, original_test_examples, output_mode, label_list \
+        original_train_examples, original_valid_examples, original_test_examples, output_mode, label_list \
             = load_glue_examples(args)
+
         # we need to split original valid_examples into new valid and test sets
-        original_valid_examples_idx = [i for i in range(len(original_valid_examples))]
+        # original_valid_examples_idx = [i for i in range(len(original_valid_examples))]
+        # original_valid_examples_label = [example.label for example in original_valid_examples]
+        # valid_idx, test_idx, valid_y, test_y = train_test_split(
+        #     original_valid_examples_idx, original_valid_examples_label,
+        #     test_size=0.5, random_state=42, stratify=original_valid_examples_label
+        # )
+        # valid_examples = [original_valid_examples[idx] for idx in valid_idx]
+        # test_examples = [original_valid_examples[idx] for idx in test_idx]
+
+        original_train_examples_idx = [i for i in range(len(original_train_examples))]
+        original_train_examples_label = [example.label for example in original_train_examples]
         original_valid_examples_label = [example.label for example in original_valid_examples]
-        valid_idx, test_idx, valid_y, test_y = train_test_split(
-            original_valid_examples_idx, original_valid_examples_label,
-            test_size=0.5, random_state=42, stratify=original_valid_examples_label
+        train_idx, valid_idx, train_y, valid_y = train_test_split(
+            original_train_examples_idx, original_train_examples_label,
+            test_size=0.1, random_state=42,
+            # stratify=original_train_examples_label
+            stratify=original_valid_examples_label
         )
-        valid_examples = [original_valid_examples[idx] for idx in valid_idx]
-        test_examples = [original_valid_examples[idx] for idx in test_idx]
+        train_examples = [original_train_examples[idx] for idx in train_idx]
+        valid_examples = [original_train_examples[idx] for idx in valid_idx]
+        test_examples = original_valid_examples
 
         data = {
             "train": train_examples, "valid": valid_examples, "test": test_examples,
