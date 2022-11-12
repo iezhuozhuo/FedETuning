@@ -7,7 +7,7 @@ federated_config:
   alpha: 1.0
   clients_num: 100
   rounds: 100
-  sample: 0.4
+  sample: 0.2
 
 #  clients_num: 10
 #  rounds: 10

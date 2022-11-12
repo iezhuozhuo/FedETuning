@@ -94,9 +94,9 @@ def convert_glue_to_device_pkl(args):
         original_valid_examples_label = [example.label for example in original_valid_examples]
         train_idx, valid_idx, train_y, valid_y = train_test_split(
             original_train_examples_idx, original_train_examples_label,
-            test_size=0.1, random_state=42,
+            test_size=args.task_split_ratio, random_state=42,
             # stratify=original_train_examples_label
-            stratify=original_valid_examples_label
+            # stratify=original_valid_examples_label
         )
         train_examples = [original_train_examples[idx] for idx in train_idx]
         valid_examples = [original_train_examples[idx] for idx in valid_idx]
@@ -191,29 +191,51 @@ if __name__ == "__main__":
     data_dir = args.data_dir
     output_dir = args.output_dir
     tasks = ["MRPC", "SST-2", "QNLI", "QQP", "MNLI", "CoLA", "RTE"]
-    # tasks = ["MRPC"]
-
+    large_tasks = ["QNLI", "QQP", "MNLI"]
+    task_split_ratio = {
+        "QNLI": 0.01,
+        "SST-2": 0.01,
+        "QQP": 0.01,
+        "MNLI": 0.01,
+        "CoLA": 0.1,
+        "RTE": 0.1,
+        "MRPC": 0.1,
+    }
     # Cross-Device Setting
-    client_nums = [100, 10]
-    args.overwrite = True
+    client_nums = [100, 10, 1000]
+    alphas = [0.1, 1.0, 10.0]
+    # client_nums = [1000]
+    # args.overwrite = True
     for task in tasks:
-        for client_num in client_nums:
-            args.clients_num = client_num
-            args.task = task
-            args.data_dir = os.path.join(data_dir, args.task)
-            args.output_dir = os.path.join(output_dir, "fedglue")
-            make_sure_dirs(args.output_dir)
-            args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
-            args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
+        args.task_split_ratio = task_split_ratio[task]
 
-            logger.info(f"clients_num: {args.clients_num}")
-            logger.info(f"data_dir: {args.data_dir}")
-            logger.info(f"output_dir: {args.output_dir}")
-            logger.info(f"output_data_file: {args.output_data_file}")
-            logger.info(f"output_partition_file: {args.output_partition_file}")
-            logger.info(f"partition method: clients={args.clients_num}_alpha={args.alpha}")
-            logger.info("")
-            convert_glue_to_device_pkl(args)
+        for client_num in client_nums:
+
+            if task in large_tasks:
+                # client_num == 1000 and
+                ...
+            else:
+                if client_num == 1000:
+                    continue
+
+            for alpha in alphas:
+
+                args.alpha = alpha
+                args.clients_num = client_num
+                args.task = task
+                args.data_dir = os.path.join(data_dir, args.task)
+                args.output_dir = os.path.join(output_dir, "fedglue")
+                make_sure_dirs(args.output_dir)
+                args.output_data_file = os.path.join(args.output_dir, f"{args.task.lower()}_data.pkl")
+                args.output_partition_file = os.path.join(args.output_dir, f"{args.task.lower()}_partition.pkl")
+
+                logger.info(f"data_dir: {args.data_dir}")
+                logger.info(f"output_dir: {args.output_dir}")
+                logger.info(f"output_data_file: {args.output_data_file}")
+                logger.info(f"output_partition_file: {args.output_partition_file}")
+                logger.info(f"partition method: clients={args.clients_num}_alpha={args.alpha}")
+                logger.info("")
+                convert_glue_to_device_pkl(args)
 
 
     # Cross-Silo
