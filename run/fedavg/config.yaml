@@ -8,11 +8,11 @@ federated_config:
   clients_num: 100
   rounds: 30
   sample: 0.1
-
+  test_rounds: False
+  log_test_len: 10
 #  clients_num: 10
 #  rounds: 10
 #  sample: 1.0
-
 
 model_config:
   model_type: roberta

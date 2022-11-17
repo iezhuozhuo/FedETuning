@@ -10,3 +10,4 @@ tensorboardX
 transformers
 seqeval
 thop
+seaborn
