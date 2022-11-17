@@ -51,7 +51,8 @@ CUDA_VISIBLE_DEVICES=${device[0]} python main.py \
 --partition_dataset_path ${run_dirs}/data/${data_file} \
 --max_seq_length ${max_seq} \
 --world_size ${world_size} \
---port ${port} &
+--port ${port} \
+--test_rounds True &
 
 #sleep 2s
 
@@ -69,7 +70,8 @@ do
     --partition_dataset_path ${run_dirs}/data/${data_file} \
     --max_seq_length ${max_seq} \
     --world_size ${world_size} \
-    --port ${port} &
+    --port ${port} \
+    --test_rounds True &
 #    sleep 2s
 }
 done

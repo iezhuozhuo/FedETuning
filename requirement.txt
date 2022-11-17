@@ -8,3 +8,5 @@ omegaconf
 scikit-learn
 tensorboardX
 transformers
+seqeval
+thop

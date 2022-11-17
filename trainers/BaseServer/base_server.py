@@ -123,6 +123,14 @@ class BaseSyncServerHandler(ParameterServerBackendHandler, ABC):
 
             self.valid_on_server()
 
+            if self.federated_config.test_rounds:
+                if self.round % self.federated_config.log_test_len == 0:
+                    result = self.test_on_server()
+                    if "test_rounds" not in self.metric_log:
+                        self.metric_log["test_rounds"] = {}
+                    self.metric_log["test_rounds"][f"round_{self.round}"] \
+                        = result[self.metric_name]
+
             # reset cache cnt
             self.client_buffer_cache = []
 

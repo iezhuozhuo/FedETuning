@@ -51,6 +51,12 @@ class FederatedTrainingArguments:
     pson: bool = field(
         default=False, metadata={"help": "Whether to use personalized test(local) metric"}
     )
+    test_rounds: bool = field(
+        default=False, metadata={"help": "logging test(global) metric"}
+    )
+    log_test_len: int = field(
+        default=10, metadata={"help": "logging test per communication rounds"}
+    )
     _clients_num_per_sub_server: int = field(
         init=False, metadata={"help": "The number of clients in different works"}
     )
