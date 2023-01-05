@@ -264,11 +264,15 @@ class BaseServerManager(ServerManager):
 
     def activate_clients(self):
 
-        self.logger.info("BaseClient activation procedure")
+        self.logger.info("TrainClient activation procedure")
         clients_this_round = self._handler.sample_clients()
-        rank_dict = self.coordinator.map_id_list(clients_this_round)
+        # old version  send rank and client_id
+        # rank_dict = self.coordinator.map_id_list(clients_this_round)
+        # new version  balance rank and client id
+        rank_dict = self.coordinator.balance_id_list(clients_this_round, self._network.world_size-1)
 
-        self.logger.info("BaseClient id list: {}".format(clients_this_round))
+        self.logger.info("TrainClient id list: {}".format(clients_this_round))
+        self.logger.info(f"Balance Client ids: {rank_dict}")
 
         for rank, values in rank_dict.items():
             downlink_package = self._handler.downlink_package

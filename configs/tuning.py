@@ -189,7 +189,7 @@ hyperparameter_grid = {
     },
     "lora": {
         "learning_rate": [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
-        "lora_rank": [8, 16],  # so to lora_alpha
+        "lora_rank": [8, 16],  # so to lora_alpha  lora_r
     },
     "adapter": {
         "learning_rate": [5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],

@@ -80,10 +80,14 @@ class FederatedTrainingArguments:
         elif self.rank == 0:
             return [i for i in range(self.clients_num)]
         else:
+            # old version
             client_id_end = min(self.clients_num, self.rank * self.clients_num_per_sub_server)
             client_id_list = [
                 i for i in range((self.rank - 1) * self.clients_num_per_sub_server, client_id_end)
             ]
+            # updated version
+            # client_id_list = [i for i in range(self.clients_num)]
+
             return client_id_list
 
     @property

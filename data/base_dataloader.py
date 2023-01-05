@@ -19,7 +19,8 @@ class BaseDataLoader(ABC):
         self.federated_config = config.federated_config
 
         self.partition_name = self.federated_config.partition_method
-        self.clients_list = self.federated_config.clients_id_list
+        # self.clients_list = self.federated_config.clients_id_list
+        self.clients_list = [i for i in range(self.federated_config.clients_num)]
 
         self._load_attributes()
         self._build_tokenizer()
@@ -71,6 +72,7 @@ class BaseDataLoader(ABC):
             train_features_dict, valid_features_dict, valid_fedtures_all, test_fedtures_all, \
             train_examples_num_dict, valid_examples_num_dict, train_num, valid_num, test_num \
                 = pickle_read(self.cached_data_file)
+            # client needs local train data and local test
             del valid_fedtures_all, test_fedtures_all
 
             for idx in self.clients_list:
@@ -78,7 +80,7 @@ class BaseDataLoader(ABC):
                 valid_dataloader_dict[idx] = self.build_dataloader(valid_features_dict[idx], "valid")
         else:
             # Local data loading
-            self.logger.info("Sorry, the current glue_dataloader doesn't support local loading")
+            self.logger.info("Sorry, the current framework doesn't support local loading")
             raise NotImplementedError
 
         self.train_dataloader_dict = train_dataloader_dict

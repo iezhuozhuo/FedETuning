@@ -42,7 +42,8 @@ class Config(ABC):
                 raise ValueError(f"Must set world_size, but find {self.F.world_size}")
         else:
             if self.F.clients_num % (self.F.world_size - 1):
-                raise ValueError(f"{self.F.clients_num} % {(self.F.world_size - 1)} != 0")
+                # raise ValueError(f"{self.F.clients_num} % {(self.F.world_size - 1)} != 0")
+                pass
 
     def config_check_model(self):
         ...

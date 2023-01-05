@@ -69,6 +69,29 @@ class Coordinator(object):
                 map_dict[rank] = [id]
         return map_dict
 
+    def balance_id_list(self, client_ids, ranks):
+        step = len(client_ids) // ranks
+        remind = len(client_ids) % ranks
+        client_id_end = None
+        client_id_list = []
+        client_id_map = {}
+        for rank in range(1, ranks + 1):
+            client_id_end = min(len(client_ids), rank * step)
+            idx_list = [
+                client_ids[i] for i in range((rank - 1) * step, client_id_end)
+            ]
+            client_id_list.append(idx_list)
+
+        if remind:
+            for i in range(remind):
+                client_id_list[i].append(client_ids[client_id_end])
+                client_id_end += 1
+
+        for rank in range(1, ranks + 1):
+            client_id_map[rank] = client_id_list[rank - 1]
+
+        return client_id_map
+
     def switch(self):
         if self.mode == 'GLOBAL':
             self.mode = 'LOCAL'

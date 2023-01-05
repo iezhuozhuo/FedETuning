@@ -18,9 +18,9 @@ model_config:
   model_type: roberta
   model_output_mode: seq_classification
 #  model_output_mode: token_classification
-  permutation_layers: false
-  client_model_layers: [0,1,2,3,4,5]
-  server_model_layers: [0,1,2,3,4,5]
+  permutation_layers: true
+  client_model_layers: [0,1,2]
+  server_model_layers: [0,1,2]
   tuning_type:
 #  tuning_type: adapter_roberta-base
 #  tuning_type: soft_prompt_roberta-base
