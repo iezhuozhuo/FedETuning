@@ -4,7 +4,7 @@ from abc import ABC
 from typing import List
 from thop import profile
 from thop import clever_format
-
+import numpy as np
 import torch
 from transformers import get_linear_schedule_with_warmup, AdamW
 
@@ -119,12 +119,41 @@ class BaseClientTrainer(ClientTrainer, ABC):
     def fed_train(self, model_parameters: torch.Tensor, id_list: List):
         param_list = []
 
+        min_local_data_num = None
         for idx in id_list:
+            self.local_data_num = 0
+
             self._train_alone(
                 idx=idx,
                 model_parameters=model_parameters
             )
             param_list.append(self.model_parameters)
+         
+            min_local_data_num = self.local_data_num if min_local_data_num is None else min(min_local_data_num, self.local_data_num)
+            
+        # 在这里加上nosie
+        if self.federated_config.use_ldp:
+            # todo, check
+            assert self.training_config.norm_type == 1
+            
+            # get mask for noise
+            noise_mask_list = []
+            for param in self._model.parameters():
+                if param.requires_grad:
+                    this_mask = torch.ones_like(param.data.view(-1))
+                else:
+                    this_mask = torch.zeros_like(param.data.view(-1))
+                noise_mask_list.append(this_mask)
+            noise_mask = torch.cat(noise_mask_list).cpu()
+            
+            # get noise
+            delta_s = 2 * self.training_config.learning_rate * self.training_config.max_grad_norm / min_local_data_num
+            noise_scale = delta_s * np.sqrt(2 * self.federated_config.sample * self.federated_config.rounds * np.log(1/self.federated_config.ldp_delta)) / self.federated_config.ldp_privacy_budget
+            
+            for index, this_param in enumerate(param_list):
+                noise = torch.normal(0, noise_scale, size=this_param.size()).to(this_param.device)
+                noise = noise * noise_mask
+                param_list[index] = this_param + noise
 
         return param_list
 
@@ -243,6 +272,7 @@ class BaseClientTrainer(ClientTrainer, ABC):
                       'labels': batch[3]
                       }
             label = inputs['labels']
+            self.local_data_num += len(label)
             if self.model_config.model_type != 'distilbert' or self.model_config.model_type != 'roberta':
                 # XLM, DistilBERT and RoBERTa don't use segment_ids
                 inputs['token_type_ids'] = batch[2] \
@@ -273,9 +303,9 @@ class BaseClientTrainer(ClientTrainer, ABC):
             self.tr_loss += loss.item()
             if (step + 1) % self.training_config.gradient_accumulation_steps == 0:
                 if self.training_config.fp16:
-                    torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), self.training_config.max_grad_norm)
+                    torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), self.training_config.max_grad_norm, norm_type=self.training_config.norm_type)
                 else:
-                    torch.nn.utils.clip_grad_norm_(self._model.parameters(), self.training_config.max_grad_norm)
+                    torch.nn.utils.clip_grad_norm_(self._model.parameters(), self.training_config.max_grad_norm, norm_type=self.training_config.norm_type)
 
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule

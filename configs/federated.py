@@ -60,6 +60,15 @@ class FederatedTrainingArguments:
     _clients_num_per_sub_server: int = field(
         init=False, metadata={"help": "The number of clients in different works"}
     )
+    ldp_delta: float = field(
+        default=0.001, metadata={"help": "A hyper-parameter for LDP."}
+    )
+    ldp_privacy_budget: float = field(
+        default=10, metadata={"help": "A hyper-parameter for LDP."}
+    )
+    use_ldp: bool = field(
+        default=False, metadata={"help": "use local differential privacy? default is false."}
+    )
 
     def __post_init__(self):
         if self.alpha is None:

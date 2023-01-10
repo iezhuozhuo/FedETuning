@@ -24,3 +24,6 @@ class TrainArguments(TrainingArguments):
     do_grid: bool = field(
         default=False, metadata={"help": "whether to do grid search"}
     )
+    norm_type: int = field(
+        default=2,
+    )
